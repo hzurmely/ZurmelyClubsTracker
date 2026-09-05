@@ -1,4 +1,5 @@
 import Crest from '@/components/Crest';
+import DefinirMeuClube from '@/components/DefinirMeuClube';
 import { divisionName, kitColor, nf, pct } from '@/lib/format';
 import { PLATFORM_LABEL } from '@/lib/config';
 
@@ -25,7 +26,10 @@ export default function ClubHeader({ info, overall, summary, platform }) {
             ) : null}
           </div>
 
-          <h1>{info?.name}</h1>
+          <div className="row row-wrap" style={{ gap: 14, alignItems: 'center' }}>
+            <h1 className="grow">{info?.name}</h1>
+            <DefinirMeuClube id={info?.clubId} platform={platform} name={info?.name} />
+          </div>
 
           <div className="row row-wrap" style={{ gap: 18, color: 'var(--muted)' }}>
             <span>
