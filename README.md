@@ -60,6 +60,35 @@ O plano gratuito dá conta tranquilamente.
 
 ---
 
+## Quando a EA bloqueia o servidor
+
+A EA recusa conexoes vindas de faixas de IP de datacenter. Rodando na sua
+maquina tudo funciona. Publicado na Vercel, a EA responde "Access Denied" em
+menos de 100ms, direto da borda da Akamai, com qualquer conjunto de cabecalhos.
+Nao e a EA fora do ar e nao e cabecalho: e a faixa de IP.
+
+Abra `/api/ea/diag` no site publicado para conferir isso a qualquer momento.
+Ele testa tres conjuntos de cabecalhos e diz o que voltou em cada um.
+
+A saida e a ponte em `worker/index.js`, um Cloudflare Worker que busca os dados
+de outra faixa de IP e devolve com CORS liberado. Ele aceita apenas os seis
+caminhos que o site usa e nao guarda nada.
+
+### Publicando a ponte
+
+1. Crie uma conta gratis em <https://dash.cloudflare.com>.
+2. Va em Compute, depois Workers e Pages, e clique em Create.
+3. Escolha comecar do Hello World, de o nome `zurmely-ea-bridge` e faca o deploy.
+4. Entre em Edit code, apague o exemplo e cole o conteudo de `worker/index.js`.
+5. Abra o endereco que a Cloudflare gerou. Tem que responder um JSON com `ok: true`.
+6. Na Vercel, em Settings e Environment Variables, crie `EA_PROXY_URL` com esse endereco.
+7. Faca um novo deploy para a variavel valer.
+
+Com `EA_PROXY_URL` vazia ou ausente o site fala direto com a EA, que e o certo
+para rodar na sua maquina.
+
+---
+
 ## Por que existe um servidor no meio
 
 A API da EA (`proclubs.ea.com/api/fc/...`) não manda cabeçalhos de CORS e
