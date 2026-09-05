@@ -1,55 +1,59 @@
 'use client';
 
-import { useState } from 'react';
-import { initials, kitColor } from '@/lib/format';
+import { initials, kitColor, readableOn } from '@/lib/format';
 
 /**
- * A EA não publica uma URL oficial e estável para o escudo customizado dos clubes.
- * Os padrões abaixo são os que a comunidade usa hoje; se algum dia pararem de
- * funcionar, o componente cai sozinho no monograma colorido, então a interface
- * nunca fica quebrada. Basta atualizar a lista quando descobrir um endereço novo.
+ * Escudo do clube.
+ *
+ * A EA não publica nenhum endereço acessível para os escudos customizados dos
+ * clubes: os padrões que a comunidade usava foram todos ao ar (testei os cinco
+ * conhecidos e todos dão erro), e os trackers grandes também não exibem o escudo
+ * de verdade. Então em vez de ficar tentando imagens que nunca carregam, aqui o
+ * escudo é desenhado com as cores reais do uniforme do clube, que a API entrega.
+ *
+ * Se um dia aparecer uma URL que funcione, é só voltar a renderizar um <img> e
+ * usar este desenho como reserva.
  */
-function candidates(crestAssetId) {
-  if (!crestAssetId) return [];
-  const id = String(crestAssetId);
-  return [
-    `https://fifa26.content.easports.com/fifa/fltOnlineAssets/24B1C4A4-DA1E-4D64-9F80-4B0EB4F0B4A1/2026/fcweb/crests/256x256/l${id}.png`,
-    `https://fifa25.content.easports.com/fifa/fltOnlineAssets/24B1C4A4-DA1E-4D64-9F80-4B0EB4F0B4A1/2025/fcweb/crests/256x256/l${id}.png`,
-    `https://media.contentapi.ea.com/content/fifa/fifa-ultimate-team/crests/256x256/l${id}.png`,
-  ];
-}
-
 export default function Crest({ club, size = 44, radius = 12 }) {
   const kit = club?.customKit || null;
-  const list = candidates(kit?.crestAssetId);
-  const [step, setStep] = useState(0);
 
-  const color = kitColor(kit?.kitColor1);
-  const src = list[step];
+  const primary = kitColor(kit?.kitColor1, '#2b7fff');
+  const secondary = kitColor(kit?.kitColor2, '#56c8ff');
+  const accent = kitColor(kit?.crestColor, secondary);
+  const ink = readableOn(primary);
 
-  const style = {
-    width: size,
-    height: size,
-    borderRadius: radius,
-    background: src
-      ? 'var(--panel-3)'
-      : `linear-gradient(140deg, ${color}, ${kitColor(kit?.crestColor, '#12d6ff')})`,
-  };
+  const label = initials(club?.name);
+  const id = `crest-${String(club?.clubId || label).replace(/[^a-z0-9]/gi, '')}`;
 
   return (
-    <div className="crest" style={style} aria-hidden="true">
-      {src ? (
-        <img
-          src={src}
-          alt=""
-          onError={() => setStep((s) => s + 1)}
-          loading="lazy"
-        />
-      ) : (
-        <span className="mono" style={{ fontSize: Math.round(size * 0.36) }}>
-          {initials(club?.name)}
-        </span>
-      )}
+    <div
+      className="crest"
+      style={{ width: size, height: size, borderRadius: radius }}
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 64 64" width="100%" height="100%" role="presentation">
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={primary} />
+            <stop offset="100%" stopColor={secondary} />
+          </linearGradient>
+        </defs>
+        <rect width="64" height="64" fill={`url(#${id})`} />
+        <path d="M0 44 L64 20 L64 64 L0 64 Z" fill={accent} opacity="0.28" />
+        <text
+          x="32"
+          y="33"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize="26"
+          fontWeight="800"
+          fontFamily="inherit"
+          letterSpacing="-1"
+          fill={ink}
+        >
+          {label}
+        </text>
+      </svg>
     </div>
   );
 }

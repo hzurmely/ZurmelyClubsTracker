@@ -32,7 +32,10 @@ export default function MatchList({ matches, platform }) {
                     )}
                   </span>
                 </span>
-                <span className="when">{timeAgo(m.timestamp)}</span>
+                <span className="when">
+                  {timeAgo(m.timestamp)}
+                  {m.matchType ? <span className="mtype">{m.matchType}</span> : null}
+                </span>
               </span>
               <span className="right" style={{ textAlign: 'right' }}>
                 <div className="score">

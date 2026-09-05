@@ -1,22 +1,31 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { posLabel, posGroup, dec, pct } from '@/lib/format';
+import { posLabel, posGroup, dec, pct, nf } from '@/lib/format';
 
-const COLUMNS = [
+/**
+ * A EA expõe o elenco em dois recortes diferentes, e eles não trazem os mesmos
+ * campos. Os percentuais (passe, desarme, finalização, vitórias) só existem no
+ * recorte da temporada; a carreira traz apenas o essencial acumulado. Por isso
+ * a tabela troca de colunas junto com o modo, em vez de mostrar zeros falsos.
+ */
+const BASE_COLUMNS = [
   { key: 'name', label: 'Jogador', type: 'text' },
-  { key: 'gamesPlayed', label: 'J', hint: 'Jogos' },
-  { key: 'goals', label: 'G', hint: 'Gols' },
-  { key: 'assists', label: 'A', hint: 'Assistências' },
-  { key: 'ga', label: 'G+A', hint: 'Participações em gols' },
+  { key: 'gamesPlayed', label: 'J', hint: 'Jogos', fmt: nf },
+  { key: 'goals', label: 'G', hint: 'Gols', fmt: nf },
+  { key: 'assists', label: 'A', hint: 'Assistências', fmt: nf },
+  { key: 'ga', label: 'G+A', hint: 'Participações em gols', fmt: nf },
   { key: 'perGame', label: 'G+A/J', hint: 'Participações por jogo', fmt: (v) => dec(v, 2) },
-  { key: 'manOfTheMatch', label: 'Craque', hint: 'Melhor em campo' },
-  { key: 'ratingAve', label: 'Nota', hint: 'Nota média', rating: true },
-  { key: 'passSuccessRate', label: 'Passe', fmt: pct },
-  { key: 'tackleSuccessRate', label: 'Desarme', fmt: pct },
-  { key: 'shotSuccessRate', label: 'Finaliz.', fmt: pct },
-  { key: 'winRate', label: 'Vitórias', fmt: pct },
-  { key: 'redCards', label: 'CV', hint: 'Cartões vermelhos' },
+  { key: 'mom', label: 'Craque', hint: 'Melhor em campo', fmt: nf },
+  { key: 'rating', label: 'Nota', hint: 'Nota média', rating: true },
+];
+
+const SEASON_ONLY = [
+  { key: 'passSuccessRate', label: 'Passe', hint: 'Acerto de passe', fmt: pct },
+  { key: 'tackleSuccessRate', label: 'Desarme', hint: 'Acerto de desarme', fmt: pct },
+  { key: 'shotSuccessRate', label: 'Finaliz.', hint: 'Acerto de finalização', fmt: pct },
+  { key: 'winRate', label: 'Vitórias', hint: 'Percentual de vitórias', fmt: pct },
+  { key: 'redCards', label: 'CV', hint: 'Cartões vermelhos', fmt: nf },
 ];
 
 function ratingClass(v) {
@@ -26,31 +35,51 @@ function ratingClass(v) {
 }
 
 export default function PlayersTable({ members }) {
+  const [mode, setMode] = useState('season');
   const [sort, setSort] = useState({ key: 'ga', dir: 'desc' });
   const [filter, setFilter] = useState('all');
 
-  const rows = useMemo(() => {
-    const enriched = (members || []).map((m) => ({
-      ...m,
-      ga: m.goals + m.assists,
-      perGame: m.gamesPlayed ? (m.goals + m.assists) / m.gamesPlayed : 0,
-      group: posGroup(m.favoritePosition || m.proPos),
-    }));
+  const hasSeason = useMemo(() => (members || []).some((m) => m.season), [members]);
+  const hasCareer = useMemo(() => (members || []).some((m) => m.career), [members]);
+  const effectiveMode = mode === 'season' && !hasSeason ? 'career' : mode;
 
-    const filtered =
-      filter === 'all' ? enriched : enriched.filter((m) => m.group === filter);
+  const columns = useMemo(
+    () => (effectiveMode === 'season' ? [...BASE_COLUMNS, ...SEASON_ONLY] : BASE_COLUMNS),
+    [effectiveMode],
+  );
+
+  const rows = useMemo(() => {
+    const enriched = (members || [])
+      .map((m) => {
+        const s = effectiveMode === 'career' ? m.career : m.season;
+        if (!s) return null;
+        return {
+          name: m.name,
+          pos: m.pos,
+          group: posGroup(m.pos),
+          proOverall: m.proOverall,
+          ...s,
+          ga: (s.goals || 0) + (s.assists || 0),
+          perGame: s.gamesPlayed ? ((s.goals || 0) + (s.assists || 0)) / s.gamesPlayed : 0,
+        };
+      })
+      .filter(Boolean);
+
+    const filtered = filter === 'all' ? enriched : enriched.filter((m) => m.group === filter);
+
+    const key = columns.some((c) => c.key === sort.key) ? sort.key : 'ga';
 
     return filtered.sort((a, b) => {
-      const av = a[sort.key];
-      const bv = b[sort.key];
+      const av = a[key];
+      const bv = b[key];
       if (typeof av === 'string' || typeof bv === 'string') {
         return sort.dir === 'asc'
           ? String(av).localeCompare(String(bv))
           : String(bv).localeCompare(String(av));
       }
-      return sort.dir === 'asc' ? av - bv : bv - av;
+      return sort.dir === 'asc' ? (av || 0) - (bv || 0) : (bv || 0) - (av || 0);
     });
-  }, [members, sort, filter]);
+  }, [members, sort, filter, effectiveMode, columns]);
 
   function toggle(key) {
     setSort((s) =>
@@ -78,23 +107,49 @@ export default function PlayersTable({ members }) {
 
   return (
     <div className="stack">
-      <div className="tabs">
-        {FILTERS.map(([id, label]) => (
-          <button
-            key={id}
-            className={`tab ${filter === id ? 'on' : ''}`}
-            onClick={() => setFilter(id)}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="row spread row-wrap" style={{ gap: 10 }}>
+        <div className="tabs">
+          {FILTERS.map(([id, label]) => (
+            <button
+              key={id}
+              className={`tab ${filter === id ? 'on' : ''}`}
+              onClick={() => setFilter(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {hasSeason && hasCareer && (
+          <div className="tabs">
+            <button
+              className={`tab ${effectiveMode === 'season' ? 'on' : ''}`}
+              onClick={() => setMode('season')}
+            >
+              Temporada
+            </button>
+            <button
+              className={`tab ${effectiveMode === 'career' ? 'on' : ''}`}
+              onClick={() => setMode('career')}
+            >
+              Carreira
+            </button>
+          </div>
+        )}
       </div>
+
+      {effectiveMode === 'career' && (
+        <p style={{ color: 'var(--dim)', fontSize: 13 }}>
+          Na carreira a EA só publica jogos, gols, assistências, craque do jogo e nota
+          média. Os percentuais existem apenas no recorte da temporada.
+        </p>
+      )}
 
       <div className="table-scroll">
         <table className="data">
           <thead>
             <tr>
-              {COLUMNS.map((c) => (
+              {columns.map((c) => (
                 <th
                   key={c.key}
                   title={c.hint || c.label}
@@ -112,20 +167,21 @@ export default function PlayersTable({ members }) {
               <tr key={m.name}>
                 <td>
                   <span className="player-cell">
-                    <span className={`poschip ${m.group}`}>
-                      {posLabel(m.favoritePosition || m.proPos)}
-                    </span>
+                    <span className={`poschip ${m.group}`}>{posLabel(m.pos)}</span>
                     <span style={{ fontWeight: 620 }}>{m.name}</span>
+                    {m.proOverall ? (
+                      <span className="ovr" title="Overall do pro">
+                        {m.proOverall}
+                      </span>
+                    ) : null}
                   </span>
                 </td>
-                {COLUMNS.slice(1).map((c) => {
+                {columns.slice(1).map((c) => {
                   const value = m[c.key] ?? 0;
                   if (c.rating) {
                     return (
                       <td key={c.key}>
-                        <span className={`rating ${ratingClass(value)}`}>
-                          {dec(value, 2)}
-                        </span>
+                        <span className={`rating ${ratingClass(value)}`}>{dec(value, 2)}</span>
                       </td>
                     );
                   }

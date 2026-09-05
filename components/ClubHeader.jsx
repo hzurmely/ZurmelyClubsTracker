@@ -14,6 +14,7 @@ export default function ClubHeader({ info, overall, summary, platform }) {
           <div className="row row-wrap" style={{ gap: 8 }}>
             <span className="tag">{PLATFORM_LABEL[platform] || platform}</span>
             <span className="tag">ID {info?.clubId}</span>
+            {info?.stadium ? <span className="tag">🏟 {info.stadium}</span> : null}
             {overall?.bestDivision ? (
               <span className="tag hot">
                 Melhor divisão: {divisionName(overall.bestDivision)}

@@ -72,15 +72,10 @@ export default function StatCards({ overall, summary }) {
 
 export function Leaders({ summary }) {
   const items = [
-    { lbl: 'Artilheiro', p: summary?.topScorer, val: (p) => p.goals, unit: 'gols' },
-    { lbl: 'Garçom', p: summary?.topAssist, val: (p) => p.assists, unit: 'assist.' },
-    {
-      lbl: 'Melhor nota',
-      p: summary?.topRating,
-      val: (p) => dec(p.ratingAve, 2),
-      unit: 'média',
-    },
-  ].filter((i) => i.p);
+    { lbl: 'Artilheiro', d: summary?.topScorer, unit: 'gols', fmt: (v) => nf(v) },
+    { lbl: 'Garçom', d: summary?.topAssist, unit: 'assistências', fmt: (v) => nf(v) },
+    { lbl: 'Melhor nota', d: summary?.topRating, unit: 'média', fmt: (v) => dec(v, 2) },
+  ].filter((i) => i.d);
 
   if (!items.length) return null;
 
@@ -90,10 +85,10 @@ export function Leaders({ summary }) {
         <div className="leader" key={i.lbl}>
           <div className="grow">
             <div className="lbl">{i.lbl}</div>
-            <div className="who">{i.p.name}</div>
+            <div className="who">{i.d.name}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div className="n">{i.val(i.p)}</div>
+            <div className="n">{i.fmt(i.d.value)}</div>
             <div className="lbl">{i.unit}</div>
           </div>
         </div>
