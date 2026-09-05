@@ -3,6 +3,10 @@ import { HEADER_VARIANTS, buildUrl, rawFetch } from '@/lib/ea';
 
 export const dynamic = 'force-dynamic';
 
+// Teste: a EA bloqueia faixas de IP de datacenter. iad1 (Virginia, AWS) leva 403.
+// Aqui pedimos que a função rode em gru1 (São Paulo) para ver se aquela faixa passa.
+export const preferredRegion = 'gru1';
+
 /**
  * Diagnóstico. Bate na EA com cada conjunto de cabeçalhos e conta o que voltou.
  * Serve para responder rápido a pergunta que sempre aparece quando o site para:
