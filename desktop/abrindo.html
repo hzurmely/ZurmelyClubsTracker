@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>ZurmelyClubsTracker</title>
+    <style>
+      :root {
+        --azul: #2b7fff;
+        --vermelho: #ff3b4e;
+        --fundo: #07080b;
+        --apagado: #6b7280;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        height: 100%;
+        margin: 0;
+        background: var(--fundo);
+        color: #fff;
+        font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+        -webkit-user-select: none;
+        user-select: none;
+        overflow: hidden;
+      }
+      .tudo {
+        height: 100%;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(900px 500px at 50% -10%, rgba(43, 127, 255, 0.16), transparent 70%),
+          var(--fundo);
+      }
+      .miolo { display: grid; justify-items: center; gap: 22px; }
+      .marca { display: flex; align-items: center; gap: 14px; }
+      .z {
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
+        background: linear-gradient(135deg, var(--azul), var(--vermelho));
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 26px;
+        font-style: italic;
+      }
+      .nome { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
+      .nome .a { color: var(--azul); }
+      .nome .b { color: #fff; }
+      .nome .c { color: var(--vermelho); }
+      .barra {
+        width: 260px;
+        height: 3px;
+        border-radius: 99px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+      .barra i {
+        display: block;
+        height: 100%;
+        width: 40%;
+        border-radius: 99px;
+        background: linear-gradient(90deg, var(--azul), var(--vermelho));
+        animation: corre 1.1s ease-in-out infinite;
+      }
+      @keyframes corre {
+        0% { transform: translateX(-110%); }
+        100% { transform: translateX(360%); }
+      }
+      .aviso { color: var(--apagado); font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <div class="tudo">
+      <div class="miolo">
+        <div class="marca">
+          <div class="z">Z</div>
+          <div class="nome"><span class="a">Zurmely</span><span class="b">Clubs</span><span class="c">Tracker</span></div>
+        </div>
+        <div class="barra"><i></i></div>
+        <div class="aviso">Preparando os dados da EA...</div>
+      </div>
+    </div>
+  </body>
+</html>
