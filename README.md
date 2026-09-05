@@ -60,6 +60,43 @@ O plano gratuito dá conta tranquilamente.
 
 ---
 
+## O bloqueio da EA, e como o site passa por ele
+
+Tem um detalhe chato: a EA usa a Akamai na frente da API, e a Akamai devolve
+`403 Access Denied` para requisições que saem das faixas de IP da Vercel. Não é
+questão de cabeçalho, é bloqueio de rede: a resposta chega em menos de 100ms,
+antes mesmo de a EA olhar o pedido. Do seu navegador, ou do `npm run dev` na sua
+máquina, a mesma URL responde normalmente. As faixas da Cloudflare também estão
+bloqueadas, então um Worker sozinho não resolve.
+
+A saída está no próprio `lib/ea.js`. Ele tenta a EA direto, percorrendo as
+variantes de cabeçalho. Se todas levarem 403, repete o pedido uma última vez pelo
+leitor público `r.jina.ai`, que sai por uma faixa de IP que a EA aceita e devolve
+o corpo da resposta intacto. Na sua máquina esse desvio nunca é usado, porque o
+caminho direto funciona. Na Vercel ele entra em ação e o site funciona igual.
+
+Para desligar o desvio, coloque `EA_LEITOR=0` nas variáveis de ambiente.
+
+Se um dia você quiser tirar o leitor do caminho, existe um Cloudflare Worker
+pronto em `worker/index.js`, que faz o mesmo papel com cache na borda:
+
+```bash
+npm install -g wrangler
+wrangler login
+wrangler deploy
+```
+
+Depois aponte o site para ele em **Settings → Environment Variables** da Vercel:
+
+```env
+EA_PROXY_URL=https://zurmely-ea-bridge.SEU-SUBDOMINIO.workers.dev
+```
+
+Hoje isso é opcional: a Cloudflare está na mesma lista de bloqueio da EA, então o
+Worker acaba caindo no mesmo desvio.
+
+---
+
 ## Quando a EA bloqueia o servidor
 
 A EA recusa conexoes vindas de faixas de IP de datacenter. Rodando na sua
@@ -144,6 +181,8 @@ lib/
   format.js                    formatação (divisões, posições, porcentagens)
   config.js                    nome do site, clube em destaque, plataformas
   demo.js                      dados fictícios do modo demonstração
+worker/
+  index.js                     ponte opcional em Cloudflare Worker
 ```
 
 ---
@@ -167,9 +206,11 @@ de `NEXT_PUBLIC_SITE_NAME` e `NEXT_PUBLIC_SITE_TAGLINE` no `.env.local`.
 ## Problemas comuns
 
 **"A API da EA não respondeu agora"**
-Costuma ser instabilidade do lado da EA. Espere alguns minutos. Se durar
-muito, dê uma olhada nos fóruns da EA: houve períodos longos de indisponibilidade
-nesses endpoints.
+Pode ser instabilidade do lado da EA, ou bloqueio de IP. Abra `/api/ea/diag` no
+site publicado: ele bate na EA com três conjuntos de cabeçalhos e mostra o status
+de cada tentativa. Três respostas 403 em poucos milissegundos significam bloqueio
+de rede, e aí quem salva é o desvio pelo leitor, descrito acima. Se der erro de
+conexão ou timeout, aí sim é a EA que está fora.
 
 **O clube não aparece na busca**
 A busca da EA é exigente com a grafia. Digite o nome idêntico ao do jogo,
