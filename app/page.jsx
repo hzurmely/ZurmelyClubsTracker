@@ -2,6 +2,7 @@ import Link from 'next/link';
 import SearchBar from '@/components/SearchBar';
 import Crest from '@/components/Crest';
 import { FormStrip } from '@/components/StatCards';
+import MeuClube from '@/components/MeuClube';
 import { SITE, MY_CLUB } from '@/lib/config';
 import { getClubDossier, summarize } from '@/lib/dossier';
 import { nf, pct, dec } from '@/lib/format';
@@ -106,20 +107,7 @@ export default async function Home() {
         </section>
       )}
 
-      {!MY_CLUB.id && (
-        <section className="block">
-          <div className="wrap">
-            <div className="banner">
-              <span>💡</span>
-              <span>
-                Quer o seu clube fixo aqui na home? Busque ele acima, copie o ID que
-                aparece na URL e coloque em <code>NEXT_PUBLIC_MY_CLUB_ID</code> no
-                arquivo <code>.env.local</code>.
-              </span>
-            </div>
-          </div>
-        </section>
-      )}
+      {!MY_CLUB.id && <MeuClube />}
 
       <section className="block">
         <div className="wrap stack">
