@@ -1,0 +1,10 @@
+{
+  "name": "zurmely-clubs-tracker",
+  "productName": "ZurmelyClubsTracker",
+  "version": "1.0.0",
+  "description": "Tracker de EA FC 26 Pro Clubs",
+  "main": "main.js",
+  "author": "hzurmely",
+  "license": "MIT",
+  "private": true
+}
