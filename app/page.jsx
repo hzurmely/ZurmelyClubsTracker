@@ -5,34 +5,14 @@ import { FormStrip } from '@/components/StatCards';
 import MeuClube from '@/components/MeuClube';
 import { SITE, MY_CLUB } from '@/lib/config';
 import { getClubDossier, summarize } from '@/lib/dossier';
+import { currentDictionary } from '@/lib/i18n/server';
 import { nf, pct, dec } from '@/lib/format';
 
 export const revalidate = 60;
 
-const FEATURES = [
-  {
-    ico: '⚡',
-    title: 'Dados direto da EA',
-    text: 'Busca em tempo real nos servidores do EA FC 26, em todas as plataformas de uma vez.',
-  },
-  {
-    ico: '📊',
-    title: 'Elenco por completo',
-    text: 'Gols, assistências, nota média, acerto de passe e desarme de cada jogador, com tabela ordenável.',
-  },
-  {
-    ico: '🎯',
-    title: 'Últimas partidas',
-    text: 'Placar, adversário e o desempenho individual de quem entrou em campo em cada jogo.',
-  },
-  {
-    ico: '⚔️',
-    title: 'Comparação direta',
-    text: 'Coloque dois clubes lado a lado e veja quem leva a melhor em cada número.',
-  },
-];
-
 export default async function Home() {
+  const dic = await currentDictionary();
+
   let mine = null;
   if (MY_CLUB.id) {
     try {
@@ -47,15 +27,14 @@ export default async function Home() {
     <>
       <section className="hero">
         <div className="wrap">
-          <span className="eyebrow">EA FC 26 · Pro Clubs</span>
+          <span className="eyebrow">{dic.home.eyebrow}</span>
           <h1>
-            Todo número do seu clube,
+            {dic.home.titleA}
             <br />
-            <span className="grad">num lugar só.</span>
+            <span className="grad">{dic.home.titleB}</span>
           </h1>
           <p className="lead">
-            {SITE.tagline}. Busque qualquer clube pelo nome e veja elenco, histórico e
-            forma recente em segundos.
+            {SITE.tagline || dic.tagline}. {dic.home.lead}
           </p>
           <SearchBar autoFocus />
         </div>
@@ -64,7 +43,7 @@ export default async function Home() {
       {mine && (
         <section className="block">
           <div className="wrap stack">
-            <div className="panel-title">Meu clube</div>
+            <div className="panel-title">{dic.myClub.title}</div>
             <Link
               href={`/clube/${MY_CLUB.platform}/${MY_CLUB.id}`}
               className="panel pad"
@@ -77,27 +56,35 @@ export default async function Home() {
                   <div className="row row-wrap" style={{ gap: 16, color: 'var(--muted)' }}>
                     <span>
                       <strong style={{ color: 'var(--text)' }}>
-                        {nf(mine.dossier.overall?.gamesPlayed)}
+                        {nf(mine.dossier.overall?.gamesPlayed, dic)}
                       </strong>{' '}
-                      jogos
+                      {dic.common.games}
                     </span>
                     <span>
-                      Aproveitamento{' '}
+                      {dic.common.winRate}{' '}
                       <strong style={{ color: 'var(--accent)' }}>
                         {pct(mine.summary.aproveitamento)}
                       </strong>
                     </span>
                     <span>
-                      Média de gols{' '}
+                      {dic.common.goalsAvg}{' '}
                       <strong style={{ color: 'var(--text)' }}>
-                        {dec(mine.summary.golsPorJogo, 2)}
+                        {dec(mine.summary.golsPorJogo, 2, dic)}
                       </strong>
                     </span>
                   </div>
                 </div>
                 <div className="stack" style={{ gap: 8 }}>
-                  <span className="lbl" style={{ fontSize: 11, letterSpacing: '.13em', color: 'var(--muted)', textTransform: 'uppercase' }}>
-                    Forma
+                  <span
+                    className="lbl"
+                    style={{
+                      fontSize: 11,
+                      letterSpacing: '.13em',
+                      color: 'var(--muted)',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {dic.common.form}
                   </span>
                   <FormStrip form={mine.summary.form.slice(0, 6)} />
                 </div>
@@ -111,9 +98,9 @@ export default async function Home() {
 
       <section className="block">
         <div className="wrap stack">
-          <div className="panel-title">O que dá pra ver aqui</div>
+          <div className="panel-title">{dic.home.featuresTitle}</div>
           <div className="grid-3">
-            {FEATURES.map((f) => (
+            {dic.home.features.map((f) => (
               <div className="feature" key={f.title}>
                 <div className="ico">{f.ico}</div>
                 <h3>{f.title}</h3>

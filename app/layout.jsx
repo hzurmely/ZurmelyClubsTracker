@@ -1,22 +1,27 @@
 import './globals.css';
 import Nav from '@/components/Nav';
+import I18nProvider from '@/components/I18nProvider';
 import { SITE } from '@/lib/config';
+import { currentLanguage } from '@/lib/i18n/server';
+import { dictionaryFor } from '@/lib/i18n/dictionaries';
 
 export const metadata = {
   title: {
     default: `${SITE.name} · Pro Clubs Analytics`,
     template: `%s · ${SITE.name}`,
   },
-  description: SITE.tagline,
 };
 
 export const viewport = {
   themeColor: '#07080b',
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const lang = await currentLanguage();
+  const dic = dictionaryFor(lang);
+
   return (
-    <html lang="pt-BR">
+    <html lang={dic.htmlLang}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -26,19 +31,20 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <Nav />
-        <main>{children}</main>
-        <footer className="footer">
-          <div className="wrap stack">
-            <div className="row spread row-wrap" style={{ gap: 16 }}>
-              <span>
-                {SITE.name} · projeto de fã, sem qualquer vínculo com a Electronic Arts.
-                Dados vindos da API pública de Pro Clubs da EA.
-              </span>
-              <span>EA FC 26</span>
+        <I18nProvider lang={lang}>
+          <Nav />
+          <main>{children}</main>
+          <footer className="footer">
+            <div className="wrap stack">
+              <div className="row spread row-wrap" style={{ gap: 16 }}>
+                <span>
+                  {SITE.name} · {dic.footer.note}
+                </span>
+                <span>EA FC 26</span>
+              </div>
             </div>
-          </div>
-        </footer>
+          </footer>
+        </I18nProvider>
       </body>
     </html>
   );
