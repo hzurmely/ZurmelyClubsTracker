@@ -1392,6 +1392,34 @@ a.lb-item:hover .lb-nome { color: var(--accent-2); }
 .langswitch button.on { background: var(--accent); color: var(--accent-ink); }
 .langswitch button[disabled] { opacity: 0.6; cursor: progress; }
 
+/* ---------------- cartoes do meu clube ---------------- */
+
+.meu-clube-card { position: relative; }
+
+/* O botao de tirar fica por cima do cartao, que inteiro e um link. Sem o
+   position relative do pai ele cairia dentro do link e roubaria o clique. */
+.meu-clube-card .tirar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--dim);
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.meu-clube-card:hover .tirar,
+.meu-clube-card .tirar:focus-visible { opacity: 1; }
+.meu-clube-card .tirar:hover { color: var(--loss); border-color: rgba(255, 59, 78, 0.4); }
+
 @media (max-width: 860px) {
   .hero { padding: 46px 0 24px; }
   .topbar .inner { gap: 12px; }
@@ -1462,4 +1490,7 @@ a.lb-item:hover .lb-nome { color: var(--accent-2); }
 
   .langswitch { margin-left: 0; }
   .langswitch button { padding: 5px 8px; font-size: 11px; }
+
+  /* No celular nao existe passar o mouse, entao o botao fica sempre visivel. */
+  .meu-clube-card .tirar { opacity: 1; }
 }
