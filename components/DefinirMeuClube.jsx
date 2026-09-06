@@ -2,21 +2,23 @@
 
 import { useEffect, useState } from 'react';
 import { useDic } from '@/components/I18nProvider';
-import { lerMeuClube, salvarMeuClube, limparMeuClube } from '@/lib/meuClube';
+import { lerMeusClubes, mesmoClube, salvarMeuClube, limparMeuClube, LIMITE } from '@/lib/meuClube';
 
 /**
- * Button on the club page. Marks (or unmarks) that club as the favourite shown
- * on the home page. It all lives in the browser of whoever clicked.
+ * Button on the club page. Adds (or removes) that club from the favourites
+ * shown on the home page. It all lives in the browser of whoever clicked.
  */
 export default function DefinirMeuClube({ id, platform, name }) {
   const dic = useDic();
   const [ehMeu, setEhMeu] = useState(false);
+  const [cheio, setCheio] = useState(false);
   const [montado, setMontado] = useState(false);
 
   useEffect(() => {
     const conferir = () => {
-      const salvo = lerMeuClube();
-      setEhMeu(!!salvo && salvo.id === String(id) && salvo.platform === platform);
+      const lista = lerMeusClubes();
+      setEhMeu(lista.some((c) => mesmoClube(c, { id, platform })));
+      setCheio(lista.length >= LIMITE);
     };
     conferir();
     setMontado(true);
@@ -28,14 +30,19 @@ export default function DefinirMeuClube({ id, platform, name }) {
   // rendering a guessed state would cause that ugly flicker.
   if (!montado) return null;
 
+  const bloqueado = !ehMeu && cheio;
+
   return (
     <button
       type="button"
       className={ehMeu ? 'btn' : 'btn ghost'}
-      onClick={() => (ehMeu ? limparMeuClube() : salvarMeuClube({ id, platform, name }))}
-      title={ehMeu ? dic.myClub.unsetTitle : dic.myClub.setTitle}
+      disabled={bloqueado}
+      onClick={() =>
+        ehMeu ? limparMeuClube(id, platform) : salvarMeuClube({ id, platform, name })
+      }
+      title={bloqueado ? dic.myClub.fullTitle(LIMITE) : ehMeu ? dic.myClub.unsetTitle : dic.myClub.setTitle}
     >
-      {ehMeu ? dic.myClub.unset : dic.myClub.set}
+      {ehMeu ? dic.myClub.unset : bloqueado ? dic.myClub.full : dic.myClub.set}
     </button>
   );
 }

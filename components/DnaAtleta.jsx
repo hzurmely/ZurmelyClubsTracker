@@ -34,6 +34,11 @@ export default function DnaAtleta({ perfil, platform, clubId, clubName }) {
   const s = recorte?.stats;
   const j = perfil.jogador;
   const ultimas = [...perfil.partidas].reverse().slice(0, 12);
+  // With the desktop archive the history can run into the hundreds, and three
+  // hundred points on a line a thousand pixels wide is a smear. The chart shows
+  // the most recent stretch; the totals below still count everything.
+  const JANELA = 30;
+  const serie = perfil.partidas.slice(-JANELA);
 
   const T = dic.dna.tiles;
   const tiles = [
@@ -152,7 +157,7 @@ export default function DnaAtleta({ perfil, platform, clubId, clubName }) {
       <div className="stack" style={{ gap: 12 }}>
         <div className="panel-title">{dic.dna.ratingTitle}</div>
         <div className="panel pad">
-          <GraficoNotas partidas={perfil.partidas} media={perfil.resumo?.notaMedia} dic={dic} />
+          <GraficoNotas partidas={serie} media={perfil.resumo?.notaMedia} dic={dic} />
         </div>
         {perfil.resumo && (
           <p className="nota-rodape">
@@ -163,6 +168,7 @@ export default function DnaAtleta({ perfil, platform, clubId, clubName }) {
               dec(perfil.resumo.notaMedia, 2, dic),
               perfil.resumo.mom,
             )}
+            {perfil.partidas.length > JANELA && dic.dna.ratingWindow(JANELA)}
           </p>
         )}
       </div>

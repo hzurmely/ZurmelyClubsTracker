@@ -1,8 +1,26 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import Crest from '@/components/Crest';
+import { useDic } from '@/components/I18nProvider';
 import { timeAgo, dec, posLabel } from '@/lib/format';
 
-export default function MatchList({ matches, platform, clubId, dic }) {
+/** How many matches appear at once, and how many each "show more" adds. */
+const PASSO = 15;
+
+/**
+ * Recent matches.
+ *
+ * On the site this is the twenty matches EA still publishes. In the desktop
+ * program the local archive can hold hundreds, so the list opens in chunks:
+ * every row carries a full lineup table inside, and rendering six hundred of
+ * those at once would freeze the page for no benefit.
+ */
+export default function MatchList({ matches, platform, clubId, arquivadas = 0 }) {
+  const dic = useDic();
+  const [visiveis, setVisiveis] = useState(PASSO);
+
   if (!matches?.length) {
     return (
       <div className="panel pad" style={{ color: 'var(--muted)' }}>
@@ -11,9 +29,13 @@ export default function MatchList({ matches, platform, clubId, dic }) {
     );
   }
 
+  const mostradas = matches.slice(0, visiveis);
+  const faltam = matches.length - mostradas.length;
+
   return (
+    <>
     <div className="panel">
-      {matches.map((m) => (
+      {mostradas.map((m) => (
         <details className="mdetail" key={m.matchId}>
           <summary>
             <div className="match">
@@ -101,5 +123,23 @@ export default function MatchList({ matches, platform, clubId, dic }) {
         </details>
       ))}
     </div>
+
+    {(faltam > 0 || arquivadas > matches.length) && (
+      <div className="row row-wrap" style={{ gap: 12, justifyContent: 'center', paddingTop: 12 }}>
+        {faltam > 0 && (
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => setVisiveis((v) => v + PASSO)}
+          >
+            {dic.matches.showMore(Math.min(faltam, PASSO))}
+          </button>
+        )}
+        <span style={{ color: 'var(--dim)', fontSize: 13 }}>
+          {dic.matches.counter(mostradas.length, matches.length)}
+        </span>
+      </div>
+    )}
+    </>
   );
 }
