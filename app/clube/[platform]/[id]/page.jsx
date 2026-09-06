@@ -109,8 +109,11 @@ export default async function ClubPage({ params }) {
             matches={dossier.matches}
             platform={platform}
             clubId={id}
-            dic={dic}
+            arquivadas={dossier.arquivadas}
           />
+          {dossier.arquivadas > 20 && (
+            <p className="nota-rodape">{dic.club.archiveNote(dossier.arquivadas)}</p>
+          )}
         </div>
       </div>
     </section>
