@@ -1,123 +1,150 @@
 # ZurmelyClubsTracker
 
-Tracker de EA FC 26 Pro Clubs feito em Next.js. Você busca um clube pelo nome e o
-site abre o elenco inteiro, a escalação ideal num campinho, os leaderboards do
-elenco, o histórico de partidas, uma página de DNA para cada jogador e a análise
-completa de cada jogo, com os dois times lado a lado.
+An EA FC 26 Pro Clubs tracker built with Next.js. Search a club by name and the
+site opens the whole squad, the best eleven on a pitch, the squad leaderboards,
+the match history, a DNA page for every player and the full analysis of every
+match, with both teams side by side.
 
-Tudo vem da API pública de Pro Clubs da EA. Não tem banco de dados, não tem
-cadastro, não tem chave de API.
+Everything comes from the public EA Pro Clubs API. No database, no sign up, no
+API key.
 
-Existe também um programa de desktop para Windows, que é a mesma coisa rodando na
-sua máquina. Veja `desktop/COMO-EMPACOTAR.md`.
-
----
-
-## O que tem dentro
-
-**Página do clube.** Cabeçalho com as cores reais do uniforme, aproveitamento,
-saldo de gols, sequências, forma recente, destaques do elenco e a tabela completa
-de jogadores, ordenável e com filtro por setor.
-
-**Escalação ideal.** Um campinho com os onze escolhidos pela nota de cada jogador
-ajustada pelo número de jogos, para que quem jogou pouco não passe na frente de
-quem sustenta o nível. Cada vaga puxa o melhor do setor dela; se o setor acabar,
-entra o melhor sobrando e o card fica marcado como improviso. Formações 3-5-2,
-4-3-3 e 4-4-2. Quando o elenco tem menos de onze jogadores com partidas
-registradas, e isso é o normal, o campo segue o elenco em vez de uma formação
-fixa: só os setores que existem ocupam o gramado.
-
-**Leaderboards.** Sete abas dentro do elenco: nota, gols, assistências, craque do
-jogo, passe, desarme e finalização. Corte de cinco partidas nas médias, para
-amostra curta não roubar o topo, dispensado sozinho quando o elenco não tem gente
-suficiente acima dele.
-
-**DNA do atleta.** Página por jogador, em `/clube/<plataforma>/<id>/jogador/<nome>`.
-Traz um arquétipo (Finalizador, Criador, Meio de ligação, Muralha e outros)
-derivado dos dois eixos em que ele mais se destaca, um radar de seis eixos
-comparando ele com a média do elenco, medalhas em três famílias (disputadas
-dentro do elenco, marcos do jogador e feitos das últimas partidas), a evolução da
-nota partida a partida e a tabela das últimas atuações.
-
-**Análise da partida.** Em `/clube/<plataforma>/<id>/partida/<matchId>`. Placar,
-uma leitura do jogo em frases geradas a partir dos números, melhor em campo dos
-dois lados, comparativo lado a lado de oito itens, as duas escalações completas em
-abas e o retrospecto contra aquele adversário quando ele aparece mais de uma vez
-no histórico guardado.
-
-**Comparação entre clubes** e **busca** com navegação por teclado.
+The interface ships in **English and Portuguese**, and there is a Windows
+desktop program that is the same site running on your own machine. See
+`desktop/PACKAGING.md`.
 
 ---
 
-## Rodando na sua máquina
+## What is inside
 
-Você precisa do [Node.js](https://nodejs.org) 18 ou mais novo.
+**Club page.** Header in the real kit colours, points won, goal difference,
+streaks, recent form, squad highlights and the full player table, sortable and
+filterable by sector.
+
+**Best eleven.** A pitch with the eleven picked by each player average rating
+adjusted for games played, so that a short run does not jump ahead of whoever
+holds the level. Each slot pulls the best player of its own sector; when that
+sector runs out, the best player left comes in flagged as out of position.
+Formations 3-5-2, 4-3-3 and 4-4-2. When the squad has fewer than eleven players
+with games on record, which is the normal case, the pitch follows the squad
+instead of a fixed formation: only the sectors that exist take up the grass.
+
+**Leaderboards.** Seven tabs inside the squad: rating, goals, assists, man of
+the match, passing, tackling and finishing. A five game cut on the averages, so
+a short sample cannot steal the top spot, waived automatically when the squad
+does not have enough players above it.
+
+**Athlete DNA.** One page per player, at
+`/clube/<platform>/<id>/jogador/<name>`. It carries an archetype (Finisher,
+Creator, Link man, Stopper and others) derived from the two axes where he stands
+out most, a six axis radar comparing him with the squad average, medals in three
+families (contested inside the squad, the player own milestones, and feats from
+the latest matches), the rating trend match by match and a table of his latest
+performances.
+
+**Match analysis.** At `/clube/<platform>/<id>/partida/<matchId>`. Scoreline, a
+reading of the game in sentences generated from the numbers, best on the pitch
+for both sides, an eight row side by side comparison, both full lineups in tabs,
+and the head to head against that opponent when they show up more than once in
+the stored history.
+
+**Club comparison** and a **search** with keyboard navigation.
+
+---
+
+## Running it locally
+
+You need [Node.js](https://nodejs.org) 18 or newer.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Abra <http://localhost:3000>.
+Open <http://localhost:3000>.
 
 ---
 
-## Meu clube
+## Language
 
-Não precisa mexer em arquivo nenhum: abra a página do seu clube e clique em
-**☆ Definir como meu clube**. A escolha fica salva no navegador (chave
-`zct:meu-clube`) e o clube passa a aparecer num card na home, com aproveitamento,
-gols por jogo e a forma recente. Clicar de novo desfaz.
+Two languages ship with the site: Portuguese and English. On a first visit the
+language comes from the browser `Accept-Language` header, so a Portuguese
+browser gets Portuguese and everyone else gets English. The **PT / EN** switch in
+the top bar overrides that, and the choice is stored in the `zct_lang` cookie for
+a year.
 
-Se você quiser fixar um clube para todo mundo que abrir o site, aí sim existem as
-variáveis de ambiente:
+Because the cookie is read on the server before rendering, there is no flash of
+the wrong language, and the pages that server render (club, player, match) come
+back already translated.
+
+Adding a language means two things: a new file under `lib/i18n/` following the
+shape of `pt.js`, and one line in `DICTIONARIES` inside
+`lib/i18n/dictionaries.js`. The two dictionaries are kept key for key identical
+on purpose, so a missing string is easy to spot.
+
+The number formatting follows the language too: Portuguese writes `8,30` and
+`1.995`, English writes `8.30` and `1,995`.
+
+Note that the URL paths stay in Portuguese (`/clube`, `/jogador`, `/partida`,
+`/comparar`, `/sobre`). They are identifiers, not copy: renaming them would break
+every link already out there and the installed desktop program.
+
+---
+
+## My club
+
+No file to edit: open your club page and click **☆ Set as my club**. The choice
+is stored in the browser (key `zct:meu-clube`) and the club shows up in a card on
+the home page with points won, goals per game and recent form. Clicking again
+undoes it.
+
+To pin a club for everyone who opens the site, there are environment variables:
 
 ```env
 NEXT_PUBLIC_MY_CLUB_ID=123456
 NEXT_PUBLIC_MY_CLUB_PLATFORM=common-gen5
 ```
 
-O ID sai da própria URL do clube: `/clube/common-gen5/123456`.
+The ID comes from the club URL itself: `/clube/common-gen5/123456`.
 
-Plataformas aceitas: `common-gen5` (PS5, Xbox Series, PC), `common-gen4`
-(PS4, Xbox One) e `nx` (Switch).
+Accepted platforms: `common-gen5` (PS5, Xbox Series, PC), `common-gen4`
+(PS4, Xbox One) and `nx` (Switch).
 
 ---
 
-## Publicando na Vercel
+## Deploying to Vercel
 
-O projeto já sai pronto para a Vercel, porque as chamadas para a EA rodam em
-route handlers do Next, que viram funções serverless automaticamente.
+The project is ready for Vercel out of the box, because the EA calls run in Next
+route handlers, which become serverless functions automatically.
 
-1. Suba o projeto para um repositório no GitHub.
-2. Entre em <https://vercel.com>, clique em **Add New → Project** e importe o
-   repositório.
-3. Não mude nada nas configurações de build.
+1. Push the project to a GitHub repository.
+2. Go to <https://vercel.com>, click **Add New → Project** and import the repo.
+3. Change nothing in the build settings.
 4. Deploy.
 
-O plano gratuito dá conta tranquilamente.
+The free plan handles it comfortably.
 
 ---
 
-## O bloqueio da EA, e como o site passa por ele
+## The EA block, and how the site gets around it
 
-Tem um detalhe chato: a EA usa a Akamai na frente da API, e a Akamai devolve
-`403 Access Denied` para requisições que saem das faixas de IP da Vercel. Não é
-questão de cabeçalho, é bloqueio de rede: a resposta chega em menos de 100ms,
-antes mesmo de a EA olhar o pedido. Do seu navegador, ou do `npm run dev` na sua
-máquina, a mesma URL responde normalmente. As faixas da Cloudflare também estão
-bloqueadas, então um Worker sozinho não resolve.
+There is an annoying detail: EA runs Akamai in front of the API, and Akamai
+returns `403 Access Denied` for requests coming from Vercel IP ranges. It is not
+a header problem, it is a network block: the answer arrives in under 100ms,
+before EA even looks at the request. From your browser, or from `npm run dev` on
+your own machine, the same URL answers normally. Cloudflare ranges are blocked
+too, so a Worker on its own does not solve it.
 
-A saída está no próprio `lib/ea.js`. Ele tenta a EA direto, percorrendo as
-variantes de cabeçalho. Se todas levarem 403, repete o pedido uma última vez pelo
-leitor público `r.jina.ai`, que sai por uma faixa de IP que a EA aceita e devolve
-o corpo da resposta intacto. Na sua máquina esse desvio nunca é usado, porque o
-caminho direto funciona. Na Vercel ele entra em ação e o site funciona igual.
+The way out lives in `lib/ea.js`. It tries EA directly, walking through the
+header variants. If all of them get a 403, it repeats the request one last time
+through the public reader `r.jina.ai`, which leaves from an IP range EA accepts
+and returns the body untouched. On your own machine that detour is never used,
+because the direct path works. On Vercel it kicks in and the site behaves the
+same.
 
-Para desligar o desvio, coloque `EA_LEITOR=0` nas variáveis de ambiente.
+To turn the detour off, set `EA_LEITOR=0` in the environment variables.
 
-Se um dia você quiser tirar o leitor do caminho, existe um Cloudflare Worker
-pronto em `worker/index.js`, que faz o mesmo papel com cache na borda:
+If you ever want the reader out of the path, there is a Cloudflare Worker ready
+in `worker/index.js` that plays the same role with caching at the edge:
 
 ```bash
 npm install -g wrangler
@@ -125,175 +152,187 @@ wrangler login
 wrangler deploy
 ```
 
-Depois aponte o site para ele em **Settings → Environment Variables** da Vercel:
+Then point the site at it under **Settings → Environment Variables** on Vercel:
 
 ```env
-EA_PROXY_URL=https://zurmely-ea-bridge.SEU-SUBDOMINIO.workers.dev
+EA_PROXY_URL=https://zurmely-ea-bridge.YOUR-SUBDOMAIN.workers.dev
 ```
 
-Hoje isso é opcional e está desligado: a Cloudflare está na mesma lista de
-bloqueio da EA, então o Worker acaba caindo no mesmo desvio pelo leitor. O
-programa de desktop não sofre disso, porque roda no IP da sua casa.
+Today this is optional and switched off: Cloudflare sits on the same EA block
+list, so the Worker ends up taking the same reader detour. The desktop program
+does not suffer from any of this, because it runs on your home IP.
 
 ---
 
-## Por que existe um servidor no meio
+## Why there is a server in the middle
 
-A API da EA (`proclubs.ea.com/api/fc/...`) não manda cabeçalhos de CORS e
-rejeita requisições que não tenham um `Referer` da EA. Um site puramente
-estático, chamando a API direto do navegador, simplesmente não funciona.
+The EA API (`proclubs.ea.com/api/fc/...`) sends no CORS headers and rejects
+requests without an EA `Referer`. A purely static site calling the API straight
+from the browser simply does not work.
 
-Por isso todo acesso passa por `lib/ea.js`, que roda no servidor. As páginas
-de clube, jogador e partida são componentes de servidor e chamam essas funções
-diretamente; a busca, que acontece enquanto você digita, passa por
-`/api/ea/search`.
+So every access goes through `lib/ea.js`, which runs on the server. The club,
+player and match pages are server components and call those functions directly;
+the search, which happens as you type, goes through `/api/ea/search`.
 
-Cada resposta fica em cache por 60 segundos, o que deixa a navegação rápida e
-evita bater na EA a cada clique.
-
----
-
-## O que a EA publica, e o que ela não publica
-
-Vale saber para não esperar o que não existe:
-
-- **Não existe posse de bola.** O comparativo da partida mostra volume de passes
-  tentados, com esse nome, que é o mais perto disso.
-- **Não existe estatística de time por partida.** Os totais dos dois lados são
-  somados linha a linha dos jogadores.
-- **Não existe histórico completo.** Só as últimas partidas de liga e playoff. Por
-  isso o retrospecto contra um adversário às vezes não aparece.
-- **Não existe endpoint de partida por id.** A página da partida busca as duas
-  listas e procura ali dentro.
-- **A carreira vem sem percentuais.** Passe, desarme, finalização e vitórias só
-  existem no recorte da temporada, e por isso as tabelas trocam de colunas junto
-  com o modo em vez de mostrar zero falso.
-- **O elenco só traz quem tem partida registrada.** Clube com seis jogadores na
-  API é o normal, não é erro.
+Each response is cached for 60 seconds, which keeps navigation quick and avoids
+hitting EA on every click.
 
 ---
 
-## Modo demonstração
+## What EA publishes, and what it does not
 
-A API da EA cai de vez em quando (dias inteiros, às vezes). Para conseguir
-mexer no layout mesmo assim, coloque no `.env.local`:
+Worth knowing so you do not expect what is not there:
+
+- **No possession.** The match comparison shows the volume of passes attempted,
+  under that name, which is the closest thing to it.
+- **No team stats per match.** Both sides are added up line by line from the
+  players.
+- **No full history.** Only the latest league and playoff matches. That is why
+  the head to head against an opponent sometimes does not show up.
+- **No match by id endpoint.** The match page fetches both lists and looks
+  inside them.
+- **Career comes without percentages.** Passing, tackling, finishing and wins
+  only exist in the season view, which is why the tables swap columns along with
+  the mode instead of showing fake zeros.
+- **The squad only carries players with games on record.** A club with six
+  players in the API is normal, not a bug.
+
+---
+
+## Demo mode
+
+The EA API goes down now and then (whole days, sometimes). To keep working on
+the layout anyway, put this in `.env.local`:
 
 ```env
 EA_DEMO=1
 ```
 
-O site passa a usar os dados fictícios de `lib/demo.js` e mostra um aviso
-amarelo no topo da página do clube, para ninguém confundir com dado real.
-Volte para `EA_DEMO=0` quando terminar. Tome cuidado para não fazer o build do
-desktop com essa variável ligada: os dados falsos entram no executável.
+The site switches to the made up data in `lib/demo.js` and shows a yellow notice
+at the top of the club page, so nobody mistakes it for real data. Set
+`EA_DEMO=0` when you are done. Be careful not to build the desktop program with
+this switched on: the fake data ends up inside the executable.
 
 ---
 
-## Estrutura
+## Structure
 
 ```
 app/
-  page.jsx                            home: busca + card do meu clube
-  clube/[platform]/[id]/              pagina do clube
-    jogador/[nome]/                   DNA do atleta
-    partida/[matchId]/                analise da partida
-  comparar/                           comparacao entre dois clubes
-  sobre/                              perguntas frequentes
-  api/ea/search/                      busca (usada pelo campo de busca)
-  api/ea/club/                        dossie completo (usado na comparacao)
-  api/ea/meu-clube/                   resumo curto para o card da home
-  api/ea/diag/                        diagnostico do bloqueio da EA
-  globals.css                         tema inteiro, em variaveis CSS
+  page.jsx                            home: search + my club card
+  clube/[platform]/[id]/              club page
+    jogador/[nome]/                   athlete DNA
+    partida/[matchId]/                match analysis
+  comparar/                           club comparison
+  sobre/                              frequently asked questions
+  api/ea/search/                      search (used by the search field)
+  api/ea/club/                        full dossier (used by the comparison)
+  api/ea/meu-clube/                   short summary for the home card
+  api/ea/diag/                        diagnostics for the EA block
+  globals.css                         the whole theme, in CSS variables
 components/
-  SearchBar.jsx                       busca com debounce e teclado
-  ClubHeader.jsx                      cabecalho com escudo e cores do uniforme
-  StatCards.jsx                       cards, forma recente e destaques
-  BestEleven.jsx                      campinho da escalacao ideal
-  Leaderboards.jsx                    rankings do elenco em sete abas
-  PlayersTable.jsx                    tabela de elenco, ordenavel e filtravel
-  DnaAtleta.jsx                       pagina do jogador
-  RadarDNA.jsx                        radar de seis eixos, em SVG
-  GraficoNotas.jsx                    nota partida a partida, em SVG
-  ComparativoPartida.jsx              barras lado a lado dos dois times
-  ElencosPartida.jsx                  as duas escalacoes de um jogo
-  MatchList.jsx                       partidas recentes
-  MeuClube.jsx                        card do meu clube na home
-  DefinirMeuClube.jsx                 botao de marcar o clube
-  Crest.jsx                           escudo desenhado com as cores do uniforme
-  Compare.jsx                         tela de comparacao
+  SearchBar.jsx                       search with debounce and keyboard
+  ClubHeader.jsx                      header with crest and kit colours
+  StatCards.jsx                       cards, recent form and highlights
+  BestEleven.jsx                      the best eleven pitch
+  Leaderboards.jsx                    squad rankings in seven tabs
+  PlayersTable.jsx                    squad table, sortable and filterable
+  DnaAtleta.jsx                       player page
+  RadarDNA.jsx                        six axis radar, in SVG
+  GraficoNotas.jsx                    rating match by match, in SVG
+  ComparativoPartida.jsx              side by side bars for both teams
+  ElencosPartida.jsx                  both lineups of a match
+  MatchList.jsx                       recent matches
+  MeuClube.jsx                        my club card on the home page
+  DefinirMeuClube.jsx                 button to mark the club
+  LanguageSwitch.jsx                  PT / EN switch
+  I18nProvider.jsx                    carries the language to client components
+  Crest.jsx                           crest drawn with the kit colours
+  Compare.jsx                         comparison screen
 lib/
-  ea.js                               cliente da API da EA
-  dossier.js                          junta info + stats + elenco + partidas
-  escalacao.js                        escolhe os onze e monta o campo
-  dna.js                              eixos do radar, medalhas e arquetipo
-  partida.js                          totais, comparativo e leitura do jogo
-  meuClube.js                         meu clube salvo no navegador
-  format.js                           formatacao (divisoes, posicoes, cores)
-  config.js                           nome do site, clube fixo, plataformas
-  demo.js                             dados ficticios do modo demonstracao
+  ea.js                               EA API client
+  dossier.js                          joins info + stats + squad + matches
+  escalacao.js                        picks the eleven and builds the pitch
+  dna.js                              radar axes, medals and archetype
+  partida.js                          totals, comparison and the game reading
+  meuClube.js                         my club, stored in the browser
+  format.js                           formatting (divisions, positions, colours)
+  config.js                           site name, pinned club, platforms
+  demo.js                             made up data for demo mode
+  i18n/
+    pt.js  en.js                      the two dictionaries, key for key
+    dictionaries.js                   registry, safe on server and client
+    server.js                         reads the cookie and Accept-Language
 desktop/
-  main.js                             casca Electron do programa de Windows
-  COMO-EMPACOTAR.md                   receita do executavel
+  main.js                             Electron shell of the Windows program
+  PACKAGING.md                        the executable recipe
 worker/
-  index.js                            ponte opcional em Cloudflare Worker
+  index.js                            optional Cloudflare Worker bridge
 ```
+
+Note on naming: files and identifiers are still in Portuguese, and that is on
+purpose. They are the project own vocabulary, renaming them would touch every
+import for no user visible gain, and the risk is not worth it. Comments,
+documentation and commits are in English.
 
 ---
 
-## Mudando a cara do site
+## Changing the look
 
-Quase tudo está em variáveis no topo de `app/globals.css`:
+Almost everything sits in variables at the top of `app/globals.css`:
 
 ```css
---brand-blue: #2b7fff;  /* o "Zurmely" */
---brand-red:  #ff3b4e;  /* o "Tracker" */
---accent:     #2b7fff;  /* cor principal da interface */
---rival:      #d2762d;  /* o adversario no comparativo da partida */
---bg:         #07080b;  /* fundo */
+--brand-blue: #2b7fff;  /* the "Zurmely" */
+--brand-red:  #ff3b4e;  /* the "Tracker" */
+--accent:     #2b7fff;  /* main interface colour */
+--rival:      #d2762d;  /* the opponent in the match comparison */
+--bg:         #07080b;  /* background */
 ```
 
-O par `--accent` e `--rival` foi escolhido passando por um validador de paleta:
-faixa de luminosidade, croma, contraste contra o painel e separação sob
-daltonismo. Se você trocar essas duas, vale conferir se continuam distinguíveis.
+The `--accent` and `--rival` pair was chosen by running it through a palette
+validator: lightness band, chroma, contrast against the panel and separation
+under colour blindness. If you swap those two, it is worth checking they stay
+distinguishable.
 
-O nome e o slogan saem de `NEXT_PUBLIC_SITE_NAME` e `NEXT_PUBLIC_SITE_TAGLINE`.
-
----
-
-## Problemas comuns
-
-**"A API da EA não respondeu agora"**
-Pode ser instabilidade do lado da EA, ou bloqueio de IP. Abra `/api/ea/diag` no
-site publicado: ele bate na EA com três conjuntos de cabeçalhos, testa também o
-desvio pelo leitor e mostra o status de cada tentativa. Três respostas 403 em
-poucos milissegundos significam bloqueio de rede, e a saída é o desvio descrito
-acima. Se der erro de conexão ou timeout, aí sim é a EA que está fora.
-
-**O clube não aparece na busca**
-A busca da EA é exigente com a grafia. Digite o nome idêntico ao do jogo,
-inclusive espaços e símbolos, e experimente trocar a plataforma no seletor.
-
-**Os escudos são só as iniciais**
-É de propósito. A EA não publica nenhum endereço acessível para os escudos
-customizados: os padrões que a comunidade usava foram todos ao ar, e os trackers
-grandes também não exibem o escudo de verdade. Em vez de tentar imagens que nunca
-carregam, o `Crest.jsx` desenha um monograma com as cores reais do uniforme, que
-a API entrega. Se um dia aparecer uma URL que funcione, é só voltar a renderizar
-um `<img>` e deixar o desenho como reserva.
-
-**Poucas partidas no histórico**
-A EA só expõe as partidas mais recentes de liga e playoff. Não existe histórico
-completo na API pública.
-
-**O jogador não aparece na página de DNA**
-A EA só devolve quem tem partida registrada no clube. Quem saiu ou ainda não
-jogou não aparece, e a página diz isso em vez de mostrar um perfil vazio.
+The name and tagline come from `NEXT_PUBLIC_SITE_NAME` and
+`NEXT_PUBLIC_SITE_TAGLINE`. Leave the tagline empty and it follows the language.
 
 ---
 
-## Aviso
+## Common problems
 
-Projeto de fã, sem qualquer vínculo, patrocínio ou aprovação da Electronic Arts.
-EA, EA SPORTS e EA FC são marcas da Electronic Arts Inc. Os dados vêm de
-endpoints públicos e não oficiais, que a EA pode mudar ou desligar a qualquer
-momento.
+**"The EA API did not answer"**
+It may be instability on the EA side, or an IP block. Open `/api/ea/diag` on the
+published site: it hits EA with three header sets, also tests the reader detour
+and shows the status of each attempt. Three 403 answers within a few
+milliseconds means a network block, and the way out is the detour described
+above. A connection error or a timeout means EA itself is down.
+
+**The club does not show up in search**
+EA search is picky about spelling. Type the name exactly as it appears in the
+game, spaces and symbols included, and try switching the platform in the
+selector.
+
+**The crests are just initials**
+On purpose. EA publishes no reachable address for custom crests: the patterns
+the community used are all down. Instead of trying images that never load,
+`Crest.jsx` draws a monogram with the real kit colours, which the API does hand
+over. If a working URL ever turns up, it is just a matter of rendering an
+`<img>` again and keeping the drawing as the fallback.
+
+**Few matches in the history**
+EA only exposes the most recent league and playoff matches. There is no full
+history on the public API.
+
+**The player does not show up on the DNA page**
+EA only returns players with games on record. Anyone who left or has not played
+yet does not appear, and the page says so instead of showing an empty profile.
+
+---
+
+## Disclaimer
+
+A fan project, with no affiliation, sponsorship or approval from Electronic
+Arts. EA, EA SPORTS and EA FC are trademarks of Electronic Arts Inc. The data
+comes from public, unofficial endpoints that EA can change or shut down at any
+time.
