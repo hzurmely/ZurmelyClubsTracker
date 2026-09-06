@@ -10,6 +10,7 @@
 const { app, BrowserWindow, shell, Menu, dialog } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 const net = require('net');
 const http = require('http');
 
@@ -18,6 +19,17 @@ const http = require('http');
 const raiz = __dirname;
 const pastaSite = path.join(raiz, 'site');
 const servidorJs = path.join(pastaSite, 'server.js');
+
+/**
+ * Where the match archive lives.
+ *
+ * Under Documents on purpose: EA drops matches older than its short window, and
+ * once this program has seen them they only exist here. Somewhere the person
+ * can open, copy to another machine and back up beats somewhere tidy, and it
+ * survives reinstalling the program, which a folder next to the executable
+ * would not.
+ */
+const pastaDados = path.join(app.getPath('documents'), 'ZurmelyClubsTracker', 'historico');
 
 let janela = null;
 let servidor = null;
@@ -70,6 +82,9 @@ async function subirServidor() {
       NODE_ENV: 'production',
       PORT: String(porta),
       HOSTNAME: '127.0.0.1',
+      // The only switch that turns the archive on. The published site never
+      // sets it, so nothing there tries to write to a disk it does not have.
+      ZCT_DATA_DIR: pastaDados,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -137,6 +152,7 @@ const MENU = {
     file: 'Arquivo',
     reload: 'Recarregar',
     openInBrowser: 'Abrir no navegador',
+    openArchive: 'Abrir a pasta do historico',
     quit: 'Sair',
     view: 'Exibir',
     zoomIn: 'Aumentar',
@@ -149,6 +165,7 @@ const MENU = {
     file: 'File',
     reload: 'Reload',
     openInBrowser: 'Open in browser',
+    openArchive: 'Open the history folder',
     quit: 'Quit',
     view: 'View',
     zoomIn: 'Zoom in',
@@ -173,6 +190,13 @@ function montarMenu() {
         {
           label: t.openInBrowser,
           click: () => endereco && shell.openExternal(endereco),
+        },
+        {
+          label: t.openArchive,
+          click: () => {
+            fs.mkdirSync(pastaDados, { recursive: true });
+            shell.openPath(pastaDados);
+          },
         },
         { type: 'separator' },
         { role: 'quit', label: t.quit },

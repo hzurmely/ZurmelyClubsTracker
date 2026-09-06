@@ -100,6 +100,19 @@ without asar the `site/` folder sits right next to it.
 The application menu follows the system language: Portuguese on a Portuguese
 system, English everywhere else, matching how the site follows the browser.
 
+`main.js` passes `ZCT_DATA_DIR` to the server process, pointing at
+`Documents/ZurmelyClubsTracker/historico`. That variable is the only thing that
+turns the match archive on, so a build without it behaves exactly like the
+published site. To test the archive by hand, start the packaged server with the
+variable set:
+
+```bash
+EA_DEMO=1 ZCT_DATA_DIR=/tmp/historico PORT=4050 node desktop/site/server.js
+```
+
+Note that demo mode does not write to the archive on purpose, so that fake data
+never lands in a real folder.
+
 ## Why the program beats the published site
 
 EA blocks datacenter IP ranges. Running on a home machine, the request leaves
