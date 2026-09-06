@@ -1,10 +1,51 @@
 # ZurmelyClubsTracker
 
-Tracker de EA FC 26 Pro Clubs feito em Next.js. Você busca um clube pelo nome, e o site
-mostra o elenco completo com estatísticas de carreira, o histórico de partidas
-recentes, a forma do time e uma comparação lado a lado entre dois clubes.
+Tracker de EA FC 26 Pro Clubs feito em Next.js. Você busca um clube pelo nome e o
+site abre o elenco inteiro, a escalação ideal num campinho, os leaderboards do
+elenco, o histórico de partidas, uma página de DNA para cada jogador e a análise
+completa de cada jogo, com os dois times lado a lado.
 
-Tudo vem da API pública de Pro Clubs da EA.
+Tudo vem da API pública de Pro Clubs da EA. Não tem banco de dados, não tem
+cadastro, não tem chave de API.
+
+Existe também um programa de desktop para Windows, que é a mesma coisa rodando na
+sua máquina. Veja `desktop/COMO-EMPACOTAR.md`.
+
+---
+
+## O que tem dentro
+
+**Página do clube.** Cabeçalho com as cores reais do uniforme, aproveitamento,
+saldo de gols, sequências, forma recente, destaques do elenco e a tabela completa
+de jogadores, ordenável e com filtro por setor.
+
+**Escalação ideal.** Um campinho com os onze escolhidos pela nota de cada jogador
+ajustada pelo número de jogos, para que quem jogou pouco não passe na frente de
+quem sustenta o nível. Cada vaga puxa o melhor do setor dela; se o setor acabar,
+entra o melhor sobrando e o card fica marcado como improviso. Formações 3-5-2,
+4-3-3 e 4-4-2. Quando o elenco tem menos de onze jogadores com partidas
+registradas, e isso é o normal, o campo segue o elenco em vez de uma formação
+fixa: só os setores que existem ocupam o gramado.
+
+**Leaderboards.** Sete abas dentro do elenco: nota, gols, assistências, craque do
+jogo, passe, desarme e finalização. Corte de cinco partidas nas médias, para
+amostra curta não roubar o topo, dispensado sozinho quando o elenco não tem gente
+suficiente acima dele.
+
+**DNA do atleta.** Página por jogador, em `/clube/<plataforma>/<id>/jogador/<nome>`.
+Traz um arquétipo (Finalizador, Criador, Meio de ligação, Muralha e outros)
+derivado dos dois eixos em que ele mais se destaca, um radar de seis eixos
+comparando ele com a média do elenco, medalhas em três famílias (disputadas
+dentro do elenco, marcos do jogador e feitos das últimas partidas), a evolução da
+nota partida a partida e a tabela das últimas atuações.
+
+**Análise da partida.** Em `/clube/<plataforma>/<id>/partida/<matchId>`. Placar,
+uma leitura do jogo em frases geradas a partir dos números, melhor em campo dos
+dois lados, comparativo lado a lado de oito itens, as duas escalações completas em
+abas e o retrospecto contra aquele adversário quando ele aparece mais de uma vez
+no histórico guardado.
+
+**Comparação entre clubes** e **busca** com navegação por teclado.
 
 ---
 
@@ -19,24 +60,24 @@ npm run dev
 
 Abra <http://localhost:3000>.
 
-Só isso. Não tem banco de dados, não tem chave de API, não tem cadastro.
-
 ---
 
-## Colocando o seu clube em destaque
+## Meu clube
 
-1. Rode o site e busque o seu clube pelo nome exato do jogo.
-2. Clique no resultado. A URL vai ficar assim:
-   `/clube/common-gen5/123456`. O número final é o ID do clube.
-3. Crie um arquivo `.env.local` na raiz do projeto (copie o `.env.example`) e
-   preencha:
+Não precisa mexer em arquivo nenhum: abra a página do seu clube e clique em
+**☆ Definir como meu clube**. A escolha fica salva no navegador (chave
+`zct:meu-clube`) e o clube passa a aparecer num card na home, com aproveitamento,
+gols por jogo e a forma recente. Clicar de novo desfaz.
+
+Se você quiser fixar um clube para todo mundo que abrir o site, aí sim existem as
+variáveis de ambiente:
 
 ```env
 NEXT_PUBLIC_MY_CLUB_ID=123456
 NEXT_PUBLIC_MY_CLUB_PLATFORM=common-gen5
 ```
 
-4. Reinicie o `npm run dev`. O clube passa a aparecer na home e no menu.
+O ID sai da própria URL do clube: `/clube/common-gen5/123456`.
 
 Plataformas aceitas: `common-gen5` (PS5, Xbox Series, PC), `common-gen4`
 (PS4, Xbox One) e `nx` (Switch).
@@ -51,9 +92,7 @@ route handlers do Next, que viram funções serverless automaticamente.
 1. Suba o projeto para um repositório no GitHub.
 2. Entre em <https://vercel.com>, clique em **Add New → Project** e importe o
    repositório.
-3. Não mude nada nas configurações de build. Se você usa o clube em destaque,
-   adicione as variáveis `NEXT_PUBLIC_MY_CLUB_ID` e
-   `NEXT_PUBLIC_MY_CLUB_PLATFORM` em **Settings → Environment Variables**.
+3. Não mude nada nas configurações de build.
 4. Deploy.
 
 O plano gratuito dá conta tranquilamente.
@@ -92,37 +131,9 @@ Depois aponte o site para ele em **Settings → Environment Variables** da Verce
 EA_PROXY_URL=https://zurmely-ea-bridge.SEU-SUBDOMINIO.workers.dev
 ```
 
-Hoje isso é opcional: a Cloudflare está na mesma lista de bloqueio da EA, então o
-Worker acaba caindo no mesmo desvio.
-
----
-
-## Quando a EA bloqueia o servidor
-
-A EA recusa conexoes vindas de faixas de IP de datacenter. Rodando na sua
-maquina tudo funciona. Publicado na Vercel, a EA responde "Access Denied" em
-menos de 100ms, direto da borda da Akamai, com qualquer conjunto de cabecalhos.
-Nao e a EA fora do ar e nao e cabecalho: e a faixa de IP.
-
-Abra `/api/ea/diag` no site publicado para conferir isso a qualquer momento.
-Ele testa tres conjuntos de cabecalhos e diz o que voltou em cada um.
-
-A saida e a ponte em `worker/index.js`, um Cloudflare Worker que busca os dados
-de outra faixa de IP e devolve com CORS liberado. Ele aceita apenas os seis
-caminhos que o site usa e nao guarda nada.
-
-### Publicando a ponte
-
-1. Crie uma conta gratis em <https://dash.cloudflare.com>.
-2. Va em Compute, depois Workers e Pages, e clique em Create.
-3. Escolha comecar do Hello World, de o nome `zurmely-ea-bridge` e faca o deploy.
-4. Entre em Edit code, apague o exemplo e cole o conteudo de `worker/index.js`.
-5. Abra o endereco que a Cloudflare gerou. Tem que responder um JSON com `ok: true`.
-6. Na Vercel, em Settings e Environment Variables, crie `EA_PROXY_URL` com esse endereco.
-7. Faca um novo deploy para a variavel valer.
-
-Com `EA_PROXY_URL` vazia ou ausente o site fala direto com a EA, que e o certo
-para rodar na sua maquina.
+Hoje isso é opcional e está desligado: a Cloudflare está na mesma lista de
+bloqueio da EA, então o Worker acaba caindo no mesmo desvio pelo leitor. O
+programa de desktop não sofre disso, porque roda no IP da sua casa.
 
 ---
 
@@ -133,11 +144,32 @@ rejeita requisições que não tenham um `Referer` da EA. Um site puramente
 estático, chamando a API direto do navegador, simplesmente não funciona.
 
 Por isso todo acesso passa por `lib/ea.js`, que roda no servidor. As páginas
-de clube são componentes de servidor e chamam essas funções diretamente; a
-busca, que acontece enquanto você digita, passa por `/api/ea/search`.
+de clube, jogador e partida são componentes de servidor e chamam essas funções
+diretamente; a busca, que acontece enquanto você digita, passa por
+`/api/ea/search`.
 
 Cada resposta fica em cache por 60 segundos, o que deixa a navegação rápida e
 evita bater na EA a cada clique.
+
+---
+
+## O que a EA publica, e o que ela não publica
+
+Vale saber para não esperar o que não existe:
+
+- **Não existe posse de bola.** O comparativo da partida mostra volume de passes
+  tentados, com esse nome, que é o mais perto disso.
+- **Não existe estatística de time por partida.** Os totais dos dois lados são
+  somados linha a linha dos jogadores.
+- **Não existe histórico completo.** Só as últimas partidas de liga e playoff. Por
+  isso o retrospecto contra um adversário às vezes não aparece.
+- **Não existe endpoint de partida por id.** A página da partida busca as duas
+  listas e procura ali dentro.
+- **A carreira vem sem percentuais.** Passe, desarme, finalização e vitórias só
+  existem no recorte da temporada, e por isso as tabelas trocam de colunas junto
+  com o modo em vez de mostrar zero falso.
+- **O elenco só traz quem tem partida registrada.** Clube com seis jogadores na
+  API é o normal, não é erro.
 
 ---
 
@@ -152,7 +184,8 @@ EA_DEMO=1
 
 O site passa a usar os dados fictícios de `lib/demo.js` e mostra um aviso
 amarelo no topo da página do clube, para ninguém confundir com dado real.
-Volte para `EA_DEMO=0` quando terminar.
+Volte para `EA_DEMO=0` quando terminar. Tome cuidado para não fazer o build do
+desktop com essa variável ligada: os dados falsos entram no executável.
 
 ---
 
@@ -160,29 +193,49 @@ Volte para `EA_DEMO=0` quando terminar.
 
 ```
 app/
-  page.jsx                     home: busca + clube em destaque
-  clube/[platform]/[id]/       página do clube
-  comparar/                    comparação entre dois clubes
-  sobre/                       perguntas frequentes
-  api/ea/search/               busca (usada pelo campo de busca)
-  api/ea/club/                 dossiê completo de um clube (usado na comparação)
-  globals.css                  tema inteiro, em variáveis CSS
+  page.jsx                            home: busca + card do meu clube
+  clube/[platform]/[id]/              pagina do clube
+    jogador/[nome]/                   DNA do atleta
+    partida/[matchId]/                analise da partida
+  comparar/                           comparacao entre dois clubes
+  sobre/                              perguntas frequentes
+  api/ea/search/                      busca (usada pelo campo de busca)
+  api/ea/club/                        dossie completo (usado na comparacao)
+  api/ea/meu-clube/                   resumo curto para o card da home
+  api/ea/diag/                        diagnostico do bloqueio da EA
+  globals.css                         tema inteiro, em variaveis CSS
 components/
-  SearchBar.jsx                busca com debounce e navegação por teclado
-  ClubHeader.jsx               cabeçalho com escudo e cores do uniforme
-  StatCards.jsx                cards de estatística, forma recente e destaques
-  PlayersTable.jsx             tabela de elenco, ordenável e com filtro por setor
-  MatchList.jsx                partidas recentes, expandindo para a escalação
-  Crest.jsx                    escudo, com fallback em monograma
-  Compare.jsx                  tela de comparação
+  SearchBar.jsx                       busca com debounce e teclado
+  ClubHeader.jsx                      cabecalho com escudo e cores do uniforme
+  StatCards.jsx                       cards, forma recente e destaques
+  BestEleven.jsx                      campinho da escalacao ideal
+  Leaderboards.jsx                    rankings do elenco em sete abas
+  PlayersTable.jsx                    tabela de elenco, ordenavel e filtravel
+  DnaAtleta.jsx                       pagina do jogador
+  RadarDNA.jsx                        radar de seis eixos, em SVG
+  GraficoNotas.jsx                    nota partida a partida, em SVG
+  ComparativoPartida.jsx              barras lado a lado dos dois times
+  ElencosPartida.jsx                  as duas escalacoes de um jogo
+  MatchList.jsx                       partidas recentes
+  MeuClube.jsx                        card do meu clube na home
+  DefinirMeuClube.jsx                 botao de marcar o clube
+  Crest.jsx                           escudo desenhado com as cores do uniforme
+  Compare.jsx                         tela de comparacao
 lib/
-  ea.js                        cliente da API da EA
-  dossier.js                   junta info + stats + elenco + partidas
-  format.js                    formatação (divisões, posições, porcentagens)
-  config.js                    nome do site, clube em destaque, plataformas
-  demo.js                      dados fictícios do modo demonstração
+  ea.js                               cliente da API da EA
+  dossier.js                          junta info + stats + elenco + partidas
+  escalacao.js                        escolhe os onze e monta o campo
+  dna.js                              eixos do radar, medalhas e arquetipo
+  partida.js                          totais, comparativo e leitura do jogo
+  meuClube.js                         meu clube salvo no navegador
+  format.js                           formatacao (divisoes, posicoes, cores)
+  config.js                           nome do site, clube fixo, plataformas
+  demo.js                             dados ficticios do modo demonstracao
+desktop/
+  main.js                             casca Electron do programa de Windows
+  COMO-EMPACOTAR.md                   receita do executavel
 worker/
-  index.js                     ponte opcional em Cloudflare Worker
+  index.js                            ponte opcional em Cloudflare Worker
 ```
 
 ---
@@ -195,11 +248,15 @@ Quase tudo está em variáveis no topo de `app/globals.css`:
 --brand-blue: #2b7fff;  /* o "Zurmely" */
 --brand-red:  #ff3b4e;  /* o "Tracker" */
 --accent:     #2b7fff;  /* cor principal da interface */
+--rival:      #d2762d;  /* o adversario no comparativo da partida */
 --bg:         #07080b;  /* fundo */
 ```
 
-Troque essas três e o site inteiro muda de identidade. O nome e o slogan saem
-de `NEXT_PUBLIC_SITE_NAME` e `NEXT_PUBLIC_SITE_TAGLINE` no `.env.local`.
+O par `--accent` e `--rival` foi escolhido passando por um validador de paleta:
+faixa de luminosidade, croma, contraste contra o painel e separação sob
+daltonismo. Se você trocar essas duas, vale conferir se continuam distinguíveis.
+
+O nome e o slogan saem de `NEXT_PUBLIC_SITE_NAME` e `NEXT_PUBLIC_SITE_TAGLINE`.
 
 ---
 
@@ -207,24 +264,30 @@ de `NEXT_PUBLIC_SITE_NAME` e `NEXT_PUBLIC_SITE_TAGLINE` no `.env.local`.
 
 **"A API da EA não respondeu agora"**
 Pode ser instabilidade do lado da EA, ou bloqueio de IP. Abra `/api/ea/diag` no
-site publicado: ele bate na EA com três conjuntos de cabeçalhos e mostra o status
-de cada tentativa. Três respostas 403 em poucos milissegundos significam bloqueio
-de rede, e aí quem salva é o desvio pelo leitor, descrito acima. Se der erro de
-conexão ou timeout, aí sim é a EA que está fora.
+site publicado: ele bate na EA com três conjuntos de cabeçalhos, testa também o
+desvio pelo leitor e mostra o status de cada tentativa. Três respostas 403 em
+poucos milissegundos significam bloqueio de rede, e a saída é o desvio descrito
+acima. Se der erro de conexão ou timeout, aí sim é a EA que está fora.
 
 **O clube não aparece na busca**
 A busca da EA é exigente com a grafia. Digite o nome idêntico ao do jogo,
 inclusive espaços e símbolos, e experimente trocar a plataforma no seletor.
 
-**Os escudos não carregam**
-A EA não publica um endereço oficial e estável para os escudos customizados.
-O `Crest.jsx` tenta alguns padrões conhecidos, em ordem, e cai num monograma
-com as cores do uniforme quando nenhum funciona. Se você descobrir uma URL nova
-que funcione, basta adicioná-la na lista `candidates()` daquele arquivo.
+**Os escudos são só as iniciais**
+É de propósito. A EA não publica nenhum endereço acessível para os escudos
+customizados: os padrões que a comunidade usava foram todos ao ar, e os trackers
+grandes também não exibem o escudo de verdade. Em vez de tentar imagens que nunca
+carregam, o `Crest.jsx` desenha um monograma com as cores reais do uniforme, que
+a API entrega. Se um dia aparecer uma URL que funcione, é só voltar a renderizar
+um `<img>` e deixar o desenho como reserva.
 
 **Poucas partidas no histórico**
 A EA só expõe as partidas mais recentes de liga e playoff. Não existe histórico
 completo na API pública.
+
+**O jogador não aparece na página de DNA**
+A EA só devolve quem tem partida registrada no clube. Quem saiu ou ainda não
+jogou não aparece, e a página diz isso em vez de mostrar um perfil vazio.
 
 ---
 
