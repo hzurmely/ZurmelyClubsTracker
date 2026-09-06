@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { FORMACOES, montarEscalacao } from '@/lib/escalacao';
+import { useDic } from '@/components/I18nProvider';
 import { dec, initials, nf, posLabel } from '@/lib/format';
 
 function classeNota(v) {
@@ -12,10 +13,11 @@ function classeNota(v) {
 }
 
 /**
- * O campinho com o time ideal. Quem escolhe os onze é o lib/escalacao.js; aqui
- * é só a apresentação, mais a troca de formação e de recorte.
+ * The pitch with the best eleven. Who picks the players is lib/escalacao.js;
+ * this is only the presentation, plus the formation and view switches.
  */
 export default function BestEleven({ members, platform, clubId }) {
+  const dic = useDic();
   const [formacaoId, setFormacaoId] = useState('3-5-2');
   const [modo, setModo] = useState('season');
 
@@ -37,7 +39,7 @@ export default function BestEleven({ members, platform, clubId }) {
     <div className="stack" style={{ gap: 14 }}>
       <div className="row spread row-wrap" style={{ gap: 10 }}>
         <div className="panel-title" style={{ margin: 0 }}>
-          Escalação ideal
+          {dic.lineup.title}
         </div>
 
         <div className="row row-wrap" style={{ gap: 10 }}>
@@ -47,20 +49,20 @@ export default function BestEleven({ members, platform, clubId }) {
                 className={`tab ${modoEfetivo === 'season' ? 'on' : ''}`}
                 onClick={() => setModo('season')}
               >
-                Temporada
+                {dic.squad.season}
               </button>
               <button
                 className={`tab ${modoEfetivo === 'career' ? 'on' : ''}`}
                 onClick={() => setModo('career')}
               >
-                Carreira
+                {dic.squad.career}
               </button>
             </div>
           )}
 
           {automatica ? (
-            <span className="tag" title="O elenco tem menos de onze jogadores com partidas, então o campo segue o elenco em vez de uma formação fixa.">
-              formação automática
+            <span className="tag" title={dic.lineup.autoTitle}>
+              {dic.lineup.auto}
             </span>
           ) : (
             <div className="tabs">
@@ -87,7 +89,7 @@ export default function BestEleven({ members, platform, clubId }) {
         </div>
 
         {escalacao.map((vaga, i) => {
-          // Cada card leva para o DNA do jogador quando sabemos de que clube ele é.
+          // Each card leads to the player DNA when we know which club he is in.
           const Caixa = vaga.jogador && platform && clubId ? Link : 'div';
           const extra =
             Caixa === Link
@@ -100,8 +102,12 @@ export default function BestEleven({ members, platform, clubId }) {
             style={{ left: `${vaga.x}%`, top: `${vaga.y}%` }}
             title={
               vaga.jogador
-                ? `${vaga.jogador.name} · ${nf(vaga.jogador.jogos)} jogos · nota ${dec(vaga.jogador.nota, 2)}`
-                : 'Sem jogador para esta vaga'
+                ? dic.lineup.playerTitle(
+                    vaga.jogador.name,
+                    nf(vaga.jogador.jogos, dic),
+                    dec(vaga.jogador.nota, 2, dic),
+                  )
+                : dic.lineup.noSlot
             }
             {...extra}
           >
@@ -110,13 +116,13 @@ export default function BestEleven({ members, platform, clubId }) {
                 <div className={`spot-badge ${vaga.grupo} ${vaga.improviso ? 'fora' : ''}`}>
                   <span className="ini">{initials(vaga.jogador.name)}</span>
                   <span className={`spot-nota ${classeNota(vaga.jogador.nota)}`}>
-                    {dec(vaga.jogador.nota, 1)}
+                    {dec(vaga.jogador.nota, 1, dic)}
                   </span>
                 </div>
                 <div className="spot-nome">{vaga.jogador.name}</div>
                 <div className="spot-pos">
                   {posLabel(vaga.jogador.pos)}
-                  {vaga.improviso ? ' · improviso' : ''}
+                  {vaga.improviso ? dic.lineup.outOfPosition : ''}
                 </div>
               </>
             ) : (
@@ -124,7 +130,7 @@ export default function BestEleven({ members, platform, clubId }) {
                 <div className="spot-badge vazio">
                   <span className="ini">–</span>
                 </div>
-                <div className="spot-pos">vaga livre</div>
+                <div className="spot-pos">{dic.lineup.freeSlot}</div>
               </>
             )}
           </Caixa>
@@ -133,21 +139,18 @@ export default function BestEleven({ members, platform, clubId }) {
       </div>
 
       <p style={{ color: 'var(--dim)', fontSize: 13, margin: 0 }}>
-        Os onze saem da nota média de cada jogador ajustada pelo número de jogos, para
-        que quem jogou pouco não passe na frente de quem sustenta o nível. A média do
-        elenco é {dec(media, 2)}, calculada sobre {nf(elenco)} jogadores.
-        {automatica &&
-          ' A EA só devolve os jogadores com partidas registradas, e aqui vieram menos de onze, então o campo segue o elenco em vez de uma formação fixa.'}
-        {improvisos > 0 && ` ${improvisos} ${improvisos === 1 ? 'vaga foi preenchida' : 'vagas foram preenchidas'} fora de posição por falta de gente no setor.`}
-        {vazias > 0 && ` ${vazias} ${vazias === 1 ? 'vaga ficou livre' : 'vagas ficaram livres'}.`}
+        {dic.lineup.note(dec(media, 2, dic), nf(elenco, dic))}
+        {automatica && dic.lineup.noteAuto}
+        {improvisos > 0 && dic.lineup.noteImproviso(improvisos)}
+        {vazias > 0 && dic.lineup.noteVazias(vazias)}
       </p>
 
       {reservas.length > 0 && (
         <div className="row row-wrap" style={{ gap: 8 }}>
-          <span style={{ color: 'var(--muted)', fontSize: 13 }}>Banco:</span>
+          <span style={{ color: 'var(--muted)', fontSize: 13 }}>{dic.lineup.bench}</span>
           {reservas.map((r) => (
-            <span key={r.name} className="tag" title={`nota ${dec(r.nota, 2)} em ${nf(r.jogos)} jogos`}>
-              {r.name} · {dec(r.nota, 1)}
+            <span key={r.name} className="tag" title={dic.lineup.benchTitle(dec(r.nota, 2, dic), nf(r.jogos, dic))}>
+              {r.name} · {dec(r.nota, 1, dic)}
             </span>
           ))}
         </div>

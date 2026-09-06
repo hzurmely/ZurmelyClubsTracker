@@ -1,12 +1,12 @@
 /**
- * Comparativo lado a lado da partida.
+ * Side by side match comparison.
  *
- * Uma linha por número: a barra da esquerda cresce para dentro a partir do meu
- * clube, a da direita a partir do adversário. Cada lado leva o valor escrito ao
- * lado, e o lado que ganhou aquele item fica com o número em destaque, então dá
- * para ler tudo sem depender da cor.
+ * One row per number: the left bar grows inward from my club, the right one
+ * from the opponent. Each side carries its value written next to it, and the
+ * side that won that item gets the number highlighted, so it all reads without
+ * depending on colour.
  */
-export default function ComparativoPartida({ linhas, nomeMeu, nomeDele }) {
+export default function ComparativoPartida({ linhas, nomeMeu, nomeDele, dic }) {
   if (!linhas?.length) return null;
 
   return (
@@ -41,11 +41,7 @@ export default function ComparativoPartida({ linhas, nomeMeu, nomeDele }) {
       </ul>
 
       <p className="nota-rodape" style={{ marginTop: 14 }}>
-        Os números de time são somados linha a linha dos jogadores, porque é assim que
-        a EA publica. Contagens dividem a barra entre os dois lados; percentuais
-        preenchem a metade de cada um com o próprio valor; a nota usa a faixa de 5 a 10.
-        A EA não publica posse de bola, e por isso ela não aparece aqui: o mais perto
-        disso é o volume de passes tentados.
+        {dic.match.comparisonNote}
       </p>
     </div>
   );

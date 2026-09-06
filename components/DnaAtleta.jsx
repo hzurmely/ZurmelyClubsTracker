@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import RadarDNA from '@/components/RadarDNA';
 import GraficoNotas from '@/components/GraficoNotas';
+import { useDic } from '@/components/I18nProvider';
 import { posLabel, initials, dec, nf, pct } from '@/lib/format';
 
 function notaClasse(v) {
@@ -12,7 +13,7 @@ function notaClasse(v) {
   return 'c';
 }
 
-/** Verde para nota alta, vermelho para nota baixa, neutro no meio. */
+/** Green for a high rating, red for a low one, neutral in between. */
 function corDaNota(v) {
   const c = notaClasse(v);
   if (c === 'a') return 'good';
@@ -27,29 +28,43 @@ function quando(ts) {
 }
 
 export default function DnaAtleta({ perfil, platform, clubId, clubName }) {
+  const dic = useDic();
   const [modo, setModo] = useState(perfil.temTemporada ? 'season' : 'career');
   const recorte = perfil.recortes[modo] || perfil.recortes.season || perfil.recortes.career;
   const s = recorte?.stats;
   const j = perfil.jogador;
   const ultimas = [...perfil.partidas].reverse().slice(0, 12);
 
+  const T = dic.dna.tiles;
   const tiles = [
-    { k: 'Partidas', v: nf(s?.gamesPlayed || 0) },
-    { k: 'Gols', v: nf(s?.goals || 0), sub: s?.gamesPlayed ? `${dec((s.goals || 0) / s.gamesPlayed, 2)} por jogo` : null },
-    { k: 'Assistências', v: nf(s?.assists || 0), sub: s?.gamesPlayed ? `${dec((s.assists || 0) / s.gamesPlayed, 2)} por jogo` : null },
-    { k: 'Nota média', v: dec(s?.rating || 0, 2), nota: s?.rating || 0 },
-    { k: 'Craque do jogo', v: nf(s?.mom || 0), sub: s?.gamesPlayed ? `${pct(((s.mom || 0) / s.gamesPlayed) * 100)} dos jogos` : null },
+    { k: T.games, v: nf(s?.gamesPlayed || 0, dic) },
+    {
+      k: T.goals,
+      v: nf(s?.goals || 0, dic),
+      sub: s?.gamesPlayed ? T.perGame(dec((s.goals || 0) / s.gamesPlayed, 2, dic)) : null,
+    },
+    {
+      k: T.assists,
+      v: nf(s?.assists || 0, dic),
+      sub: s?.gamesPlayed ? T.perGame(dec((s.assists || 0) / s.gamesPlayed, 2, dic)) : null,
+    },
+    { k: T.rating, v: dec(s?.rating || 0, 2, dic), nota: s?.rating || 0 },
+    {
+      k: T.mom,
+      v: nf(s?.mom || 0, dic),
+      sub: s?.gamesPlayed ? T.ofGames(pct(((s.mom || 0) / s.gamesPlayed) * 100)) : null,
+    },
   ];
 
   if (modo === 'season' && s) {
     tiles.push(
-      { k: 'Vitórias', v: pct(s.winRate || 0) },
-      { k: 'Passe certo', v: pct(s.passSuccessRate || 0), sub: `${nf(s.passesMade || 0)} passes certos` },
-      { k: 'Desarme certo', v: pct(s.tackleSuccessRate || 0), sub: `${nf(s.tacklesMade || 0)} desarmes` },
-      { k: 'Finalização', v: pct(s.shotSuccessRate || 0) },
+      { k: T.wins, v: pct(s.winRate || 0) },
+      { k: T.pass, v: pct(s.passSuccessRate || 0), sub: T.passesMade(nf(s.passesMade || 0, dic)) },
+      { k: T.tackle, v: pct(s.tackleSuccessRate || 0), sub: T.tacklesMade(nf(s.tacklesMade || 0, dic)) },
+      { k: T.shot, v: pct(s.shotSuccessRate || 0) },
     );
     if (j.grupo === 'gk' || (s.cleanSheetsGK || 0) > 0) {
-      tiles.push({ k: 'Gol fechado', v: nf(s.cleanSheetsGK || 0), sub: 'jogos sem sofrer' });
+      tiles.push({ k: T.cleanSheets, v: nf(s.cleanSheetsGK || 0, dic), sub: T.cleanSheetsSub });
     }
   }
 
@@ -72,17 +87,17 @@ export default function DnaAtleta({ perfil, platform, clubId, clubName }) {
         {perfil.temTemporada && perfil.temCarreira && (
           <div className="tabs">
             <button className={`tab ${modo === 'season' ? 'on' : ''}`} onClick={() => setModo('season')}>
-              Temporada
+              {dic.squad.season}
             </button>
             <button className={`tab ${modo === 'career' ? 'on' : ''}`} onClick={() => setModo('career')}>
-              Carreira
+              {dic.squad.career}
             </button>
           </div>
         )}
       </div>
 
       <div className="panel pad atleta-dna">
-        <div className="dna-selo">DNA</div>
+        <div className="dna-selo">{dic.dna.badge}</div>
         <div>
           <div className="dna-titulo">{perfil.arquetipo.titulo}</div>
           <p className="dna-texto">{perfil.arquetipo.texto}</p>
@@ -100,15 +115,12 @@ export default function DnaAtleta({ perfil, platform, clubId, clubName }) {
       </div>
 
       {modo === 'career' && (
-        <p style={{ color: 'var(--dim)', fontSize: 13 }}>
-          Na carreira a EA só publica partidas, gols, assistências, craque do jogo e nota
-          média. Os percentuais existem apenas no recorte da temporada.
-        </p>
+        <p style={{ color: 'var(--dim)', fontSize: 13 }}>{dic.dna.careerNote}</p>
       )}
 
       {recorte?.medalhas?.length > 0 && (
         <div className="stack" style={{ gap: 12 }}>
-          <div className="panel-title">Medalhas</div>
+          <div className="panel-title">{dic.dna.medalsTitle}</div>
           <div className="medalhas">
             {recorte.medalhas.map((m) => (
               <div className={`medalha ${m.tipo}`} key={m.titulo}>
@@ -120,65 +132,56 @@ export default function DnaAtleta({ perfil, platform, clubId, clubName }) {
               </div>
             ))}
           </div>
-          <p className="nota-rodape">
-            As de borda azul são disputadas dentro do elenco e podem trocar de dono. As
-            de borda cinza são marcos do jogador e ficam. As de borda vermelha saíram das
-            últimas partidas do clube.
-          </p>
+          <p className="nota-rodape">{dic.dna.medalsNote}</p>
         </div>
       )}
 
       {perfil.temRadar && (
         <div className="stack" style={{ gap: 12 }}>
-          <div className="panel-title">Onde ele é forte</div>
+          <div className="panel-title">{dic.dna.strongTitle}</div>
           <div className="panel pad">
-            <RadarDNA eixos={perfil.eixos} nome={j.name} />
+            <RadarDNA eixos={perfil.eixos} nome={j.name} dic={dic} />
           </div>
           <p className="nota-rodape">
-            O topo de cada eixo é o melhor do elenco naquele item, então o desenho
-            responde onde ele está em relação aos companheiros, não se ele é bom em
-            termos absolutos. A comparação usa os {perfil.elenco} jogadores com partidas
-            na temporada. Gols e assistências entram por jogo, para não premiar apenas
-            quem joga mais.
-            {perfil.elenco < 3 &&
-              ' Com esse número de jogadores registrados a comparação fica frouxa: quase todo mundo é o melhor do elenco em alguma coisa. Leia o desenho como um esboço, não como veredito.'}
+            {dic.dna.radarNote(perfil.elenco)}
+            {perfil.elenco < 3 && dic.dna.radarWeak}
           </p>
         </div>
       )}
 
       <div className="stack" style={{ gap: 12 }}>
-        <div className="panel-title">Nota partida a partida</div>
+        <div className="panel-title">{dic.dna.ratingTitle}</div>
         <div className="panel pad">
-          <GraficoNotas partidas={perfil.partidas} media={perfil.resumo?.notaMedia} />
+          <GraficoNotas partidas={perfil.partidas} media={perfil.resumo?.notaMedia} dic={dic} />
         </div>
         {perfil.resumo && (
           <p className="nota-rodape">
-            Nas {perfil.resumo.jogos} partidas que a EA ainda guarda deste clube ele fez{' '}
-            {perfil.resumo.gols} {perfil.resumo.gols === 1 ? 'gol' : 'gols'} e{' '}
-            {perfil.resumo.assistencias}{' '}
-            {perfil.resumo.assistencias === 1 ? 'assistência' : 'assistências'}, com nota
-            média {dec(perfil.resumo.notaMedia, 2)} e {perfil.resumo.mom}{' '}
-            {perfil.resumo.mom === 1 ? 'vez' : 'vezes'} como craque do jogo. O histórico
-            público vai até as últimas partidas registradas, não a carreira inteira.
+            {dic.dna.ratingNote(
+              perfil.resumo.jogos,
+              perfil.resumo.gols,
+              perfil.resumo.assistencias,
+              dec(perfil.resumo.notaMedia, 2, dic),
+              perfil.resumo.mom,
+            )}
           </p>
         )}
       </div>
 
       {ultimas.length > 0 && (
         <div className="stack" style={{ gap: 12 }}>
-          <div className="panel-title">Últimas atuações</div>
+          <div className="panel-title">{dic.dna.lastTitle}</div>
           <div className="table-scroll">
             <table className="data">
               <thead>
                 <tr>
-                  <th>Partida</th>
-                  <th>Nota</th>
-                  <th title="Gols">G</th>
-                  <th title="Assistências">A</th>
-                  <th title="Finalizações">Chutes</th>
-                  <th title="Acerto de passe">Passe</th>
-                  <th title="Acerto de desarme">Desarme</th>
-                  <th title="Craque do jogo">Craque</th>
+                  <th>{dic.dna.lastCols.match}</th>
+                  <th>{dic.dna.lastCols.rating}</th>
+                  <th title={dic.squad.cols.goalsHint}>{dic.dna.lastCols.goals}</th>
+                  <th title={dic.squad.cols.assistsHint}>{dic.dna.lastCols.assists}</th>
+                  <th>{dic.dna.lastCols.shots}</th>
+                  <th title={dic.squad.cols.passHint}>{dic.dna.lastCols.pass}</th>
+                  <th title={dic.squad.cols.tackleHint}>{dic.dna.lastCols.tackle}</th>
+                  <th title={dic.squad.cols.momHint}>{dic.dna.lastCols.mom}</th>
                 </tr>
               </thead>
               <tbody>
@@ -196,13 +199,13 @@ export default function DnaAtleta({ perfil, platform, clubId, clubName }) {
                       </span>
                     </td>
                     <td>
-                      <span className={`rating ${notaClasse(p.rating)}`}>{dec(p.rating, 2)}</span>
+                      <span className={`rating ${notaClasse(p.rating)}`}>{dec(p.rating, 2, dic)}</span>
                     </td>
                     <td>{p.goals}</td>
                     <td>{p.assists}</td>
                     <td>{p.shots}</td>
-                    <td>{p.passe === null ? 'n/d' : pct(p.passe)}</td>
-                    <td>{p.desarme === null ? 'n/d' : pct(p.desarme)}</td>
+                    <td>{p.passe === null ? dic.common.na : pct(p.passe)}</td>
+                    <td>{p.desarme === null ? dic.common.na : pct(p.desarme)}</td>
                     <td>{p.mom ? '⭐' : ''}</td>
                   </tr>
                 ))}

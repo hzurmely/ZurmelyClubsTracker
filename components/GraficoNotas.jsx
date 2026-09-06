@@ -3,17 +3,17 @@
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * Evolução de nota, partida a partida.
+ * Rating trend, match by match.
  *
- * O desenho é medido em pixels reais do container, não esticado a partir de um
- * viewBox fixo. Sem isso o mesmo SVG que fica legível no computador vira letra
- * de 4px no celular, porque o texto encolhe junto com o desenho.
+ * The drawing is measured in the real pixels of its container, not stretched
+ * from a fixed viewBox. Without that, the same SVG that reads fine on a desktop
+ * turns into 4px type on a phone, because the text shrinks with the drawing.
  *
- * Uma série só, então não precisa de legenda de cor: o título já diz o que é a
- * linha. O resultado de cada jogo aparece embaixo pela letra V, E ou D, nunca só
- * pela cor, para continuar legível para quem não distingue verde de vermelho.
+ * One series only, so no colour legend is needed: the title already says what
+ * the line is. Each result shows below as the letter V, E or D, never colour
+ * alone, so it stays readable for anyone who cannot tell green from red.
  */
-export default function GraficoNotas({ partidas, media }) {
+export default function GraficoNotas({ partidas, media, dic }) {
   const caixa = useRef(null);
   const [largura, setLargura] = useState(0);
 
@@ -32,9 +32,9 @@ export default function GraficoNotas({ partidas, media }) {
   if (pontos.length < 2) {
     return (
       <p className="vazio-nota">
-        A EA devolve o histórico das últimas partidas do clube, e neste recorte
-        {pontos.length ? ' só apareceu uma partida dele' : ' ele não aparece em nenhuma'}.
-        A linha de evolução precisa de pelo menos duas.
+        {dic.dna.ratingEmptyA}
+        {pontos.length ? dic.dna.ratingEmptyOne : dic.dna.ratingEmptyNone}
+        {dic.dna.ratingEmptyB}
       </p>
     );
   }
@@ -60,8 +60,8 @@ export default function GraficoNotas({ partidas, media }) {
 
   const espaco = larguraUtil / (pontos.length - 1);
   const raio = espaco < 22 ? 3.5 : 4.5;
-  // Com muitos jogos em pouco espaço, as letras se encavalam. Aí só as ímpares
-  // aparecem, e o resto continua no toque de cada ponto.
+  // With many games in little space the letters collide. Then only every other
+  // one is drawn, and the rest stays in the tap target of each point.
   const passoLetra = espaco < 16 ? 2 : 1;
 
   const linha = pontos.map((p, i) => `${x(i)},${y(p.rating)}`).join(' ');
@@ -81,7 +81,7 @@ export default function GraficoNotas({ partidas, media }) {
           height={H}
           viewBox={`0 0 ${W} ${H}`}
           role="img"
-          aria-label="Nota por partida, da mais antiga para a mais recente"
+          aria-label={dic.dna.ratingAria}
         >
           {ticks.map((v) => (
             <g key={v}>
@@ -99,7 +99,7 @@ export default function GraficoNotas({ partidas, media }) {
             </g>
           ))}
 
-          {/* Média do jogador no recorte, como referência. */}
+          {/* The player average for this view, as a reference line. */}
           {Number.isFinite(media) && media > baixo && media < alto && (
             <>
               <line
@@ -111,7 +111,7 @@ export default function GraficoNotas({ partidas, media }) {
                 strokeWidth="1"
               />
               <text x={W - R} y={y(media) - 6} textAnchor="end" className="gn-media">
-                média {media.toFixed(2).replace('.', ',')}
+                {dic.dna.ratingAvg(media.toFixed(2).replace('.', ','))}
               </text>
             </>
           )}
@@ -135,18 +135,22 @@ export default function GraficoNotas({ partidas, media }) {
                 stroke="var(--panel)"
                 strokeWidth="2"
               />
-              {/* Alvo de toque maior que a bolinha, para funcionar no celular. */}
+              {/* Tap target larger than the dot, so it works on a phone. */}
               <circle cx={x(i)} cy={y(p.rating)} r={Math.max(espaco / 2, 13)} fill="transparent">
                 <title>
-                  {`${p.adversario} · ${p.placar} · nota ${p.rating.toFixed(2).replace('.', ',')}` +
+                  {dic.match.reading.tooltip(
+                    p.adversario,
+                    p.placar,
+                    p.rating.toFixed(2).replace('.', ','),
                     (p.goals ? ` · ${p.goals}G` : '') +
-                    (p.assists ? ` · ${p.assists}A` : '') +
-                    (p.mom ? ' · craque do jogo' : '')}
+                      (p.assists ? ` · ${p.assists}A` : '') +
+                      (p.mom ? dic.match.reading.tooltipMom : ''),
+                  )}
                 </title>
               </circle>
               {rotulados.has(i) && (
-                // Nota colada no teto do gráfico ganha o rótulo por baixo, senão
-                // o texto sai pela borda de cima e fica cortado.
+                // A rating glued to the top of the chart gets its label below,
+                // otherwise the text runs past the upper edge and gets clipped.
                 <text
                   x={x(i)}
                   y={y(p.rating) - T > 16 ? y(p.rating) - 12 : y(p.rating) + 19}
@@ -165,10 +169,10 @@ export default function GraficoNotas({ partidas, media }) {
           ))}
 
           <text x={L} y={H - 5} className="gn-eixo">
-            mais antiga
+            {dic.dna.oldest}
           </text>
           <text x={W - R} y={H - 5} textAnchor="end" className="gn-eixo">
-            mais recente
+            {dic.dna.newest}
           </text>
         </svg>
       )}

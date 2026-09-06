@@ -3,29 +3,34 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { normalizar } from '@/lib/escalacao';
+import { useDic } from '@/components/I18nProvider';
 import { dec, initials, nf, pct, posLabel, posGroup } from '@/lib/format';
 
 const MINIMO = 5;
 
-const ABAS = [
-  { id: 'nota', label: 'Nota média', campo: 'nota', fmt: (v) => dec(v, 2), exigeJogos: true },
-  { id: 'gols', label: 'Gols', campo: 'gols', fmt: nf },
-  { id: 'assistencias', label: 'Assistências', campo: 'assistencias', fmt: nf },
-  { id: 'craque', label: 'Craque do jogo', campo: 'craque', fmt: nf },
-  { id: 'passe', label: '% Passes', campo: 'passe', fmt: pct, exigeJogos: true, soTemporada: true },
-  { id: 'desarme', label: '% Desarmes', campo: 'desarme', fmt: pct, exigeJogos: true, soTemporada: true },
-  { id: 'finalizacao', label: '% Finalização', campo: 'finalizacao', fmt: pct, exigeJogos: true, soTemporada: true },
-];
+function buildTabs(dic) {
+  const t = dic.leaderboards.tabs;
+  return [
+    { id: 'nota', label: t.rating, campo: 'nota', fmt: (v) => dec(v, 2, dic), exigeJogos: true },
+    { id: 'gols', label: t.goals, campo: 'gols', fmt: (v) => nf(v, dic) },
+    { id: 'assistencias', label: t.assists, campo: 'assistencias', fmt: (v) => nf(v, dic) },
+    { id: 'craque', label: t.mom, campo: 'craque', fmt: (v) => nf(v, dic) },
+    { id: 'passe', label: t.pass, campo: 'passe', fmt: pct, exigeJogos: true, soTemporada: true },
+    { id: 'desarme', label: t.tackle, campo: 'desarme', fmt: pct, exigeJogos: true, soTemporada: true },
+    { id: 'finalizacao', label: t.shot, campo: 'finalizacao', fmt: pct, exigeJogos: true, soTemporada: true },
+  ];
+}
 
 /**
- * Rankings do elenco, uma aba por critério.
+ * Squad rankings, one tab per criterion.
  *
- * Nas abas de média e percentual entra um mínimo de partidas, senão quem jogou
- * uma vez e acertou o único passe aparece com 100% em primeiro lugar. Se o
- * clube for pequeno demais para o corte fazer sentido, ele é dispensado e o
- * aviso muda, em vez de a tabela aparecer vazia.
+ * The average and percentage tabs carry a minimum number of games, otherwise
+ * whoever played once and completed his only pass shows up first with 100%.
+ * When the club is too small for the cut to make sense it is waived and the
+ * note changes, instead of the table coming back empty.
  */
 export default function Leaderboards({ members, platform, clubId }) {
+  const dic = useDic();
   const [abaId, setAbaId] = useState('nota');
   const [modo, setModo] = useState('season');
 
@@ -34,8 +39,8 @@ export default function Leaderboards({ members, platform, clubId }) {
   const modoEfetivo = modo === 'season' && !temTemporada ? 'career' : modo;
 
   const abas = useMemo(
-    () => ABAS.filter((a) => !a.soTemporada || modoEfetivo === 'season'),
-    [modoEfetivo],
+    () => buildTabs(dic).filter((a) => !a.soTemporada || modoEfetivo === 'season'),
+    [dic, modoEfetivo],
   );
 
   const aba = abas.find((a) => a.id === abaId) || abas[0];
@@ -65,7 +70,7 @@ export default function Leaderboards({ members, platform, clubId }) {
     <div className="stack" style={{ gap: 14 }}>
       <div className="row spread row-wrap" style={{ gap: 10 }}>
         <div className="panel-title" style={{ margin: 0 }}>
-          Leaderboards
+          {dic.leaderboards.title}
         </div>
 
         {temTemporada && temCarreira && (
@@ -74,13 +79,13 @@ export default function Leaderboards({ members, platform, clubId }) {
               className={`tab ${modoEfetivo === 'season' ? 'on' : ''}`}
               onClick={() => setModo('season')}
             >
-              Temporada
+              {dic.squad.season}
             </button>
             <button
               className={`tab ${modoEfetivo === 'career' ? 'on' : ''}`}
               onClick={() => setModo('career')}
             >
-              Carreira
+              {dic.squad.career}
             </button>
           </div>
         )}
@@ -101,7 +106,7 @@ export default function Leaderboards({ members, platform, clubId }) {
       <div className="panel">
         {linhas.length === 0 ? (
           <div className="pad" style={{ color: 'var(--muted)' }}>
-            Ninguém do elenco tem esse dado nesta consulta.
+            {dic.leaderboards.empty}
           </div>
         ) : (
           <ol className="lb">
@@ -119,7 +124,7 @@ export default function Leaderboards({ members, platform, clubId }) {
                     <span className="grow">
                       <span className="lb-nome">{j.name}</span>
                       <span className="lb-sub">
-                        {posLabel(j.pos)} · {nf(j.jogos)} jogos
+                        {posLabel(j.pos)} · {dic.leaderboards.games(nf(j.jogos, dic))}
                       </span>
                     </span>
                     <span className="lb-valor">{aba.fmt(j[aba.campo] || 0)}</span>
@@ -134,9 +139,9 @@ export default function Leaderboards({ members, platform, clubId }) {
       <p style={{ color: 'var(--dim)', fontSize: 13, margin: 0 }}>
         {aba.exigeJogos
           ? cortou
-            ? `Nesta aba entram só quem tem ${MINIMO} partidas ou mais, para média curta não roubar o topo.`
-            : `O corte de ${MINIMO} partidas foi dispensado: o elenco não tem gente suficiente acima dele. Leia as médias de quem jogou pouco com desconfiança.`
-          : 'Números somados no recorte escolhido, sem corte de partidas.'}
+            ? dic.leaderboards.noteCut(MINIMO)
+            : dic.leaderboards.noteNoCut(MINIMO)
+          : dic.leaderboards.noteSum}
       </p>
     </div>
   );

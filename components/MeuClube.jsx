@@ -4,17 +4,19 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Crest from '@/components/Crest';
 import { FormStrip } from '@/components/StatCards';
+import { useDic } from '@/components/I18nProvider';
 import { lerMeuClube, limparMeuClube } from '@/lib/meuClube';
 import { nf, pct, dec } from '@/lib/format';
 
 /**
- * Cartão do clube favorito na home. O clube fica guardado no navegador, então
- * quem escolhe é quem está usando, sem mexer em arquivo nenhum.
+ * Favourite club card on the home page. The club is kept in the browser, so
+ * whoever is using the site picks it, with no file to edit.
  */
 export default function MeuClube() {
+  const dic = useDic();
   const [escolha, setEscolha] = useState(null);
   const [dados, setDados] = useState(null);
-  const [estado, setEstado] = useState('lendo'); // lendo | vazio | carregando | pronto | erro
+  const [estado, setEstado] = useState('lendo'); // reading | empty | loading | ready | error
 
   const reler = useCallback(() => {
     const salvo = lerMeuClube();
@@ -40,7 +42,7 @@ export default function MeuClube() {
     let vivo = true;
     setEstado('carregando');
     fetch(`/api/ea/meu-clube?platform=${escolha.platform}&id=${escolha.id}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('nao veio'))))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no data'))))
       .then((d) => {
         if (!vivo) return;
         setDados(d);
@@ -61,16 +63,16 @@ export default function MeuClube() {
     return (
       <section className="block">
         <div className="wrap">
-          {/* A faixa acompanha o tamanho do texto e fica centrada, em vez de
-              esticar de ponta a ponta e deixar um vazio grande à direita. */}
+          {/* The banner follows the width of its text and stays centred, instead
+              of stretching end to end and leaving a big gap on the right. */}
           <div
             className="banner"
             style={{ width: 'fit-content', maxWidth: '100%', margin: '0 auto', alignItems: 'center' }}
           >
             <span>⭐</span>
             <span>
-              Quer o seu clube fixo aqui na home? Busque ele acima, abra a página dele
-              e clique em <strong>Definir como meu clube</strong>.
+              {dic.myClub.emptyA}
+              <strong>{dic.myClub.emptyB}</strong>.
             </span>
           </div>
         </div>
@@ -82,9 +84,9 @@ export default function MeuClube() {
     return (
       <section className="block">
         <div className="wrap stack">
-          <div className="panel-title">Meu clube</div>
+          <div className="panel-title">{dic.myClub.title}</div>
           <div className="panel pad" style={{ color: 'var(--muted)' }}>
-            Carregando {escolha?.name || `o clube #${escolha?.id}`}...
+            {dic.myClub.loading(escolha?.name || dic.myClub.clubNumber(escolha?.id))}
           </div>
         </div>
       </section>
@@ -95,16 +97,16 @@ export default function MeuClube() {
     return (
       <section className="block">
         <div className="wrap stack">
-          <div className="panel-title">Meu clube</div>
+          <div className="panel-title">{dic.myClub.title}</div>
           <div className="panel pad row row-wrap" style={{ gap: 12, color: 'var(--muted)' }}>
             <span className="grow">
-              Não consegui carregar {escolha?.name || `o clube #${escolha?.id}`} agora.
+              {dic.myClub.cantLoad(escolha?.name || dic.myClub.clubNumber(escolha?.id))}
             </span>
             <button type="button" className="btn ghost" onClick={() => setEscolha({ ...escolha })}>
-              Tentar de novo
+              {dic.common.tryAgain}
             </button>
             <button type="button" className="btn ghost" onClick={limparMeuClube}>
-              Esquecer este clube
+              {dic.myClub.forget}
             </button>
           </div>
         </div>
@@ -116,9 +118,9 @@ export default function MeuClube() {
     <section className="block">
       <div className="wrap stack">
         <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="panel-title">Meu clube</div>
+          <div className="panel-title">{dic.myClub.title}</div>
           <button type="button" className="btn ghost" onClick={limparMeuClube}>
-            Trocar
+            {dic.myClub.change}
           </button>
         </div>
 
@@ -133,15 +135,16 @@ export default function MeuClube() {
               <h2 style={{ fontSize: 26 }}>{dados.name}</h2>
               <div className="row row-wrap" style={{ gap: 16, color: 'var(--muted)' }}>
                 <span>
-                  <strong style={{ color: 'var(--text)' }}>{nf(dados.gamesPlayed)}</strong> jogos
+                  <strong style={{ color: 'var(--text)' }}>{nf(dados.gamesPlayed, dic)}</strong>{' '}
+                  {dic.common.games}
                 </span>
                 <span>
-                  Aproveitamento{' '}
+                  {dic.common.winRate}{' '}
                   <strong style={{ color: 'var(--accent)' }}>{pct(dados.aproveitamento)}</strong>
                 </span>
                 <span>
-                  Média de gols{' '}
-                  <strong style={{ color: 'var(--text)' }}>{dec(dados.golsPorJogo, 2)}</strong>
+                  {dic.common.goalsAvg}{' '}
+                  <strong style={{ color: 'var(--text)' }}>{dec(dados.golsPorJogo, 2, dic)}</strong>
                 </span>
               </div>
             </div>
@@ -154,9 +157,9 @@ export default function MeuClube() {
                   textTransform: 'uppercase',
                 }}
               >
-                Forma
+                {dic.common.form}
               </span>
-              <FormStrip form={dados.form} />
+              <FormStrip form={dados.form} dic={dic} />
             </div>
           </div>
         </Link>

@@ -1,7 +1,13 @@
 import { nf, dec, pct } from '@/lib/format';
 
-export function FormStrip({ form }) {
-  if (!form?.length) return <span style={{ color: 'var(--dim)' }}>sem partidas recentes</span>;
+/**
+ * These render on the server for the club page and on the client for the home
+ * card, so the dictionary arrives as a prop instead of through context.
+ */
+export function FormStrip({ form, dic }) {
+  if (!form?.length) {
+    return <span style={{ color: 'var(--dim)' }}>{dic?.stats.noMatches}</span>;
+  }
   return (
     <div className="form-strip">
       {form.map((r, i) => (
@@ -13,21 +19,22 @@ export function FormStrip({ form }) {
   );
 }
 
-export default function StatCards({ overall, summary }) {
+export default function StatCards({ overall, summary, dic }) {
   const o = overall || {};
   const total = o.gamesPlayed || 1;
   const wPct = (o.wins / total) * 100;
   const dPct = (o.ties / total) * 100;
   const lPct = (o.losses / total) * 100;
   const saldo = summary?.saldo ?? 0;
+  const t = dic.stats;
 
   return (
     <div className="grid-stats">
       <div className="stat">
-        <div className="k">Aproveitamento</div>
+        <div className="k">{t.winRate}</div>
         <div className="v">{pct(summary?.aproveitamento)}</div>
         <div className="sub">
-          {nf(o.wins)}V · {nf(o.ties)}E · {nf(o.losses)}D
+          {nf(o.wins, dic)}V · {nf(o.ties, dic)}E · {nf(o.losses, dic)}D
         </div>
         <div className="bar">
           <i className="w" style={{ width: `${wPct}%` }} />
@@ -37,44 +44,44 @@ export default function StatCards({ overall, summary }) {
       </div>
 
       <div className="stat">
-        <div className="k">Saldo de gols</div>
+        <div className="k">{t.goalDiff}</div>
         <div className={`v ${saldo >= 0 ? 'good' : 'bad'}`}>
           {saldo > 0 ? '+' : ''}
-          {nf(saldo)}
+          {nf(saldo, dic)}
         </div>
         <div className="sub">
-          {nf(o.goals)} marcados · {nf(o.goalsAgainst)} sofridos
+          {nf(o.goals, dic)} {t.scored} · {nf(o.goalsAgainst, dic)} {t.conceded}
         </div>
       </div>
 
       <div className="stat">
-        <div className="k">Gols por jogo</div>
-        <div className="v">{dec(summary?.golsPorJogo, 2)}</div>
-        <div className="sub">sofre {dec(summary?.sofridosPorJogo, 2)} por jogo</div>
+        <div className="k">{t.goalsPerGame}</div>
+        <div className="v">{dec(summary?.golsPorJogo, 2, dic)}</div>
+        <div className="sub">{t.concedes(dec(summary?.sofridosPorJogo, 2, dic))}</div>
       </div>
 
       <div className="stat">
-        <div className="k">Sequências</div>
-        <div className="v">{nf(o.unbeatenstreak)}</div>
+        <div className="k">{t.streaks}</div>
+        <div className="v">{nf(o.unbeatenstreak, dic)}</div>
         <div className="sub">
-          jogos invicto · {nf(o.wstreak)} vitórias seguidas
+          {t.unbeaten} · {t.winsInRow(nf(o.wstreak, dic))}
         </div>
       </div>
 
       <div className="stat">
-        <div className="k">Acessos</div>
-        <div className="v good">{nf(o.promotions)}</div>
-        <div className="sub">{nf(o.relegations)} rebaixamentos</div>
+        <div className="k">{t.promotions}</div>
+        <div className="v good">{nf(o.promotions, dic)}</div>
+        <div className="sub">{t.relegations(nf(o.relegations, dic))}</div>
       </div>
     </div>
   );
 }
 
-export function Leaders({ summary }) {
+export function Leaders({ summary, dic }) {
   const items = [
-    { lbl: 'Artilheiro', d: summary?.topScorer, unit: 'gols', fmt: (v) => nf(v) },
-    { lbl: 'Garçom', d: summary?.topAssist, unit: 'assistências', fmt: (v) => nf(v) },
-    { lbl: 'Melhor nota', d: summary?.topRating, unit: 'média', fmt: (v) => dec(v, 2) },
+    { lbl: dic.club.topScorer, d: summary?.topScorer, unit: dic.common.goals, fmt: (v) => nf(v, dic) },
+    { lbl: dic.club.playmaker, d: summary?.topAssist, unit: dic.common.assists, fmt: (v) => nf(v, dic) },
+    { lbl: dic.club.bestRating, d: summary?.topRating, unit: dic.club.average, fmt: (v) => dec(v, 2, dic) },
   ].filter((i) => i.d);
 
   if (!items.length) return null;

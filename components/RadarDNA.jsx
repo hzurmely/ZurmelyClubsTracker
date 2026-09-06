@@ -1,13 +1,14 @@
 /**
- * Radar do DNA.
+ * The DNA radar.
  *
- * Duas figuras sobrepostas: o jogador e a média do elenco dele. O topo de cada
- * eixo é o melhor do elenco naquele item, então a figura responde "onde ele
- * está em relação aos companheiros", não "ele é bom em termos absolutos".
+ * Two shapes on top of each other: the player and his squad average. The top
+ * of each axis is the best in the squad for that item, so the shape answers
+ * "where does he stand against his teammates", not "is he good in absolute
+ * terms".
  *
- * Todos os seis valores aparecem escritos ao lado do desenho, de propósito: o
- * radar mostra o formato, os números mostram o dado. Quem não consegue ler o
- * polígono ainda tem tudo em texto.
+ * All six values are written out beside the drawing on purpose: the radar
+ * shows the shape, the numbers show the data. Anyone who cannot read the
+ * polygon still has everything in text.
  */
 
 const R = 104;
@@ -24,7 +25,7 @@ function poligono(eixos, campo) {
   return eixos.map((e, i) => ponto(i, eixos.length, e[campo]).join(',')).join(' ');
 }
 
-export default function RadarDNA({ eixos, nome }) {
+export default function RadarDNA({ eixos, nome, dic }) {
   if (!eixos?.length) return null;
 
   const aneis = [25, 50, 75, 100];
@@ -35,9 +36,9 @@ export default function RadarDNA({ eixos, nome }) {
         className="radar"
         viewBox="0 0 420 320"
         role="img"
-        aria-label={`Radar de ${nome} comparado à média do elenco`}
+        aria-label={dic.dna.radarAria(nome)}
       >
-        {/* Malha de fundo. Traço fino e sólido, um tom acima do painel. */}
+        {/* Background mesh. Thin solid hairline, one shade above the panel. */}
         {aneis.map((a) => (
           <polygon
             key={a}
@@ -62,8 +63,8 @@ export default function RadarDNA({ eixos, nome }) {
           );
         })}
 
-        {/* Média do elenco: referência, não é uma série concorrente. Por isso
-            cinza neutro, sem preenchimento forte. */}
+        {/* Squad average: a reference, not a competing series. Hence neutral
+            grey, with no strong fill. */}
         <polygon
           points={poligono(eixos, 'escalaElenco')}
           fill="rgba(141,151,168,0.10)"
@@ -71,7 +72,7 @@ export default function RadarDNA({ eixos, nome }) {
           strokeWidth="1.5"
         />
 
-        {/* O jogador. */}
+        {/* The player. */}
         <polygon
           points={poligono(eixos, 'escala')}
           fill="rgba(43,127,255,0.22)"
@@ -91,12 +92,12 @@ export default function RadarDNA({ eixos, nome }) {
               stroke="var(--panel)"
               strokeWidth="2"
             >
-              <title>{`${e.rotulo}: ${e.texto} (${e.posicao}º de ${e.de} no elenco)`}</title>
+              <title>{dic.dna.radarTitle(e.rotulo, e.texto, e.posicao, e.de)}</title>
             </circle>
           );
         })}
 
-        {/* Rótulos nas pontas. */}
+        {/* Labels at the tips. */}
         {eixos.map((e, i) => {
           const [x, y] = ponto(i, eixos.length, 131);
           const meio = Math.abs(x - CX) < 6;
@@ -124,9 +125,7 @@ export default function RadarDNA({ eixos, nome }) {
               <b style={{ left: `${Math.min(Math.max(e.escalaElenco, 0), 100)}%` }} />
             </span>
             <span className="rl-valor">{e.texto}</span>
-            <span className="rl-pos">
-              {e.posicao}º de {e.de}
-            </span>
+            <span className="rl-pos">{dic.dna.radarPos(e.posicao, e.de)}</span>
           </li>
         ))}
       </ul>
@@ -136,7 +135,7 @@ export default function RadarDNA({ eixos, nome }) {
           <i className="marca jogador" /> {nome}
         </span>
         <span>
-          <i className="marca elenco" /> média do elenco
+          <i className="marca elenco" /> {dic.dna.radarLegend}
         </span>
       </div>
     </div>

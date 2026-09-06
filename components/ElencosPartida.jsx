@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ordenarElenco } from '@/lib/partida';
+import { useDic } from '@/components/I18nProvider';
 import { posLabel, posGroup, dec, pct } from '@/lib/format';
 
 function classeNota(v) {
@@ -11,13 +12,13 @@ function classeNota(v) {
   return 'c';
 }
 
-function Tabela({ jogadores, platform, clubId }) {
+function Tabela({ jogadores, platform, clubId, dic }) {
   const linhas = ordenarElenco(jogadores);
 
   if (!linhas.length) {
     return (
       <div className="panel pad" style={{ color: 'var(--muted)' }}>
-        A EA não devolveu as linhas deste time nesta partida.
+        {dic.match.squadEmpty}
       </div>
     );
   }
@@ -27,15 +28,15 @@ function Tabela({ jogadores, platform, clubId }) {
       <table className="data">
         <thead>
           <tr>
-            <th>Jogador</th>
-            <th title="Nota da partida">Nota</th>
-            <th title="Gols">G</th>
-            <th title="Assistências">A</th>
-            <th title="Finalizações">Chutes</th>
-            <th title="Passes certos sobre tentados">Passe</th>
-            <th title="Desarmes certos sobre tentados">Desarme</th>
-            <th title="Defesas do goleiro">Defesas</th>
-            <th title="Craque do jogo">Craque</th>
+            <th>{dic.match.squadCols.player}</th>
+            <th title={dic.match.squadCols.ratingHint}>{dic.match.squadCols.rating}</th>
+            <th title={dic.squad.cols.goalsHint}>{dic.match.squadCols.goals}</th>
+            <th title={dic.squad.cols.assistsHint}>{dic.match.squadCols.assists}</th>
+            <th>{dic.match.squadCols.shots}</th>
+            <th title={dic.match.squadCols.passHint}>{dic.match.squadCols.pass}</th>
+            <th title={dic.match.squadCols.tackleHint}>{dic.match.squadCols.tackle}</th>
+            <th title={dic.match.squadCols.savesHint}>{dic.match.squadCols.saves}</th>
+            <th title={dic.match.squadCols.momHint}>{dic.match.squadCols.mom}</th>
           </tr>
         </thead>
         <tbody>
@@ -57,7 +58,7 @@ function Tabela({ jogadores, platform, clubId }) {
                 </span>
               </td>
               <td>
-                <span className={`rating ${classeNota(p.rating)}`}>{dec(p.rating, 2)}</span>
+                <span className={`rating ${classeNota(p.rating)}`}>{dec(p.rating, 2, dic)}</span>
               </td>
               <td>{p.goals}</td>
               <td>{p.assists}</td>
@@ -87,10 +88,12 @@ function Tabela({ jogadores, platform, clubId }) {
 }
 
 /**
- * Os dois elencos da partida. Fica em abas porque duas tabelas empilhadas viram
- * uma rolagem enorme no celular, e a graça é comparar um lado com o outro.
+ * Both squads from the match. It sits in tabs because two stacked tables turn
+ * into an enormous scroll on a phone, and the point is comparing one side with
+ * the other.
  */
 export default function ElencosPartida({ meu, dele, platform }) {
+  const dic = useDic();
   const [lado, setLado] = useState('meu');
   const time = lado === 'meu' ? meu : dele;
 
@@ -98,7 +101,7 @@ export default function ElencosPartida({ meu, dele, platform }) {
     <div className="stack" style={{ gap: 12 }}>
       <div className="row spread row-wrap">
         <div className="panel-title" style={{ margin: 0 }}>
-          Como cada um jogou
+          {dic.match.squadsTitle}
         </div>
         <div className="tabs">
           <button className={`tab ${lado === 'meu' ? 'on' : ''}`} onClick={() => setLado('meu')}>
@@ -110,9 +113,9 @@ export default function ElencosPartida({ meu, dele, platform }) {
         </div>
       </div>
 
-      {/* O nome leva para o DNA do jogador dentro do clube dele. Quem já saiu do
-          clube cai numa página que explica isso, em vez de num perfil vazio. */}
-      <Tabela jogadores={time.jogadores} platform={platform} clubId={time.clubId} />
+      {/* The name leads to the player DNA inside his own club. Anyone who has
+          already left lands on a page that explains it, not an empty profile. */}
+      <Tabela jogadores={time.jogadores} platform={platform} clubId={time.clubId} dic={dic} />
     </div>
   );
 }

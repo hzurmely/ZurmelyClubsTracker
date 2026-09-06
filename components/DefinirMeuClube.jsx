@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useDic } from '@/components/I18nProvider';
 import { lerMeuClube, salvarMeuClube, limparMeuClube } from '@/lib/meuClube';
 
 /**
- * Botão da página do clube. Marca (ou desmarca) aquele clube como o favorito
- * que aparece na home. Fica tudo no navegador de quem clicou.
+ * Button on the club page. Marks (or unmarks) that club as the favourite shown
+ * on the home page. It all lives in the browser of whoever clicked.
  */
 export default function DefinirMeuClube({ id, platform, name }) {
+  const dic = useDic();
   const [ehMeu, setEhMeu] = useState(false);
   const [montado, setMontado] = useState(false);
 
@@ -22,8 +24,8 @@ export default function DefinirMeuClube({ id, platform, name }) {
     return () => window.removeEventListener('zct:meu-clube', conferir);
   }, [id, platform]);
 
-  // Antes de montar no navegador não dá para saber a preferência, e renderizar
-  // um estado chutado causaria aquele piscar feio.
+  // Before mounting in the browser there is no way to know the preference, and
+  // rendering a guessed state would cause that ugly flicker.
   if (!montado) return null;
 
   return (
@@ -31,9 +33,9 @@ export default function DefinirMeuClube({ id, platform, name }) {
       type="button"
       className={ehMeu ? 'btn' : 'btn ghost'}
       onClick={() => (ehMeu ? limparMeuClube() : salvarMeuClube({ id, platform, name }))}
-      title={ehMeu ? 'Tirar da home' : 'Fixar este clube na home'}
+      title={ehMeu ? dic.myClub.unsetTitle : dic.myClub.setTitle}
     >
-      {ehMeu ? '★ Meu clube' : '☆ Definir como meu clube'}
+      {ehMeu ? dic.myClub.unset : dic.myClub.set}
     </button>
   );
 }

@@ -2,12 +2,11 @@ import Link from 'next/link';
 import Crest from '@/components/Crest';
 import { timeAgo, dec, posLabel } from '@/lib/format';
 
-export default function MatchList({ matches, platform, clubId }) {
+export default function MatchList({ matches, platform, clubId, dic }) {
   if (!matches?.length) {
     return (
       <div className="panel pad" style={{ color: 'var(--muted)' }}>
-        Nenhuma partida recente encontrada. A EA guarda só as últimas partidas de
-        liga e playoff, então clubes parados aparecem vazios aqui.
+        {dic.matches.empty}
       </div>
     );
   }
@@ -34,7 +33,11 @@ export default function MatchList({ matches, platform, clubId }) {
                 </span>
                 <span className="when">
                   {timeAgo(m.timestamp)}
-                  {m.matchType ? <span className="mtype">{m.matchType}</span> : null}
+                  {m.matchType ? (
+                    <span className="mtype">
+                      {m.matchType === 'Playoff' ? dic.matches.playoff : dic.matches.league}
+                    </span>
+                  ) : null}
                 </span>
               </span>
               <span className="right" style={{ textAlign: 'right' }}>
@@ -42,7 +45,7 @@ export default function MatchList({ matches, platform, clubId }) {
                   {m.goalsFor} <span style={{ color: 'var(--dim)' }}>x</span>{' '}
                   {m.goalsAgainst}
                 </div>
-                <div className="when">ver escalação</div>
+                <div className="when">{dic.matches.seeLineup}</div>
               </span>
             </div>
           </summary>
@@ -55,22 +58,22 @@ export default function MatchList({ matches, platform, clubId }) {
                   className="btn ghost"
                   style={{ padding: '7px 14px', fontSize: 13 }}
                 >
-                  Análise completa da partida
+                  {dic.matches.fullAnalysis}
                 </Link>
               </div>
             ) : null}
             <table className="mini-table">
               <thead>
                 <tr>
-                  <th>Jogador</th>
-                  <th>Pos</th>
-                  <th>G</th>
-                  <th>A</th>
-                  <th>Fin</th>
-                  <th>Passes</th>
-                  <th>Desarmes</th>
-                  <th>Defesas</th>
-                  <th>Nota</th>
+                  <th>{dic.matches.cols.player}</th>
+                  <th>{dic.matches.cols.pos}</th>
+                  <th>{dic.matches.cols.goals}</th>
+                  <th>{dic.matches.cols.assists}</th>
+                  <th>{dic.matches.cols.shots}</th>
+                  <th>{dic.matches.cols.passes}</th>
+                  <th>{dic.matches.cols.tackles}</th>
+                  <th>{dic.matches.cols.saves}</th>
+                  <th>{dic.matches.cols.rating}</th>
                 </tr>
               </thead>
               <tbody>
@@ -89,7 +92,7 @@ export default function MatchList({ matches, platform, clubId }) {
                     </td>
                     <td>{p.tacklesMade}</td>
                     <td>{p.saves}</td>
-                    <td>{dec(p.rating, 1)}</td>
+                    <td>{dec(p.rating, 1, dic)}</td>
                   </tr>
                 ))}
               </tbody>

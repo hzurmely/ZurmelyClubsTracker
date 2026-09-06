@@ -2,32 +2,37 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useDic } from '@/components/I18nProvider';
 import { posLabel, posGroup, dec, pct, nf } from '@/lib/format';
 
 /**
- * A EA expõe o elenco em dois recortes diferentes, e eles não trazem os mesmos
- * campos. Os percentuais (passe, desarme, finalização, vitórias) só existem no
- * recorte da temporada; a carreira traz apenas o essencial acumulado. Por isso
- * a tabela troca de colunas junto com o modo, em vez de mostrar zeros falsos.
+ * EA exposes the squad in two different views, and they do not carry the same
+ * fields. The percentages (pass, tackle, shot, wins) only exist in the season
+ * view; career only brings the essential totals. That is why the table swaps
+ * columns along with the mode instead of showing fake zeros.
  */
-const BASE_COLUMNS = [
-  { key: 'name', label: 'Jogador', type: 'text' },
-  { key: 'gamesPlayed', label: 'J', hint: 'Jogos', fmt: nf },
-  { key: 'goals', label: 'G', hint: 'Gols', fmt: nf },
-  { key: 'assists', label: 'A', hint: 'Assistências', fmt: nf },
-  { key: 'ga', label: 'G+A', hint: 'Participações em gols', fmt: nf },
-  { key: 'perGame', label: 'G+A/J', hint: 'Participações por jogo', fmt: (v) => dec(v, 2) },
-  { key: 'mom', label: 'Craque', hint: 'Melhor em campo', fmt: nf },
-  { key: 'rating', label: 'Nota', hint: 'Nota média', rating: true },
-];
-
-const SEASON_ONLY = [
-  { key: 'passSuccessRate', label: 'Passe', hint: 'Acerto de passe', fmt: pct },
-  { key: 'tackleSuccessRate', label: 'Desarme', hint: 'Acerto de desarme', fmt: pct },
-  { key: 'shotSuccessRate', label: 'Finaliz.', hint: 'Acerto de finalização', fmt: pct },
-  { key: 'winRate', label: 'Vitórias', hint: 'Percentual de vitórias', fmt: pct },
-  { key: 'redCards', label: 'CV', hint: 'Cartões vermelhos', fmt: nf },
-];
+function buildColumns(dic, mode) {
+  const c = dic.squad.cols;
+  const base = [
+    { key: 'name', label: c.name, type: 'text' },
+    { key: 'gamesPlayed', label: c.games, hint: c.gamesHint, fmt: (v) => nf(v, dic) },
+    { key: 'goals', label: c.goals, hint: c.goalsHint, fmt: (v) => nf(v, dic) },
+    { key: 'assists', label: c.assists, hint: c.assistsHint, fmt: (v) => nf(v, dic) },
+    { key: 'ga', label: c.ga, hint: c.gaHint, fmt: (v) => nf(v, dic) },
+    { key: 'perGame', label: c.perGame, hint: c.perGameHint, fmt: (v) => dec(v, 2, dic) },
+    { key: 'mom', label: c.mom, hint: c.momHint, fmt: (v) => nf(v, dic) },
+    { key: 'rating', label: c.rating, hint: c.ratingHint, rating: true },
+  ];
+  if (mode !== 'season') return base;
+  return [
+    ...base,
+    { key: 'passSuccessRate', label: c.pass, hint: c.passHint, fmt: pct },
+    { key: 'tackleSuccessRate', label: c.tackle, hint: c.tackleHint, fmt: pct },
+    { key: 'shotSuccessRate', label: c.shot, hint: c.shotHint, fmt: pct },
+    { key: 'winRate', label: c.wins, hint: c.winsHint, fmt: pct },
+    { key: 'redCards', label: c.red, hint: c.redHint, fmt: (v) => nf(v, dic) },
+  ];
+}
 
 function ratingClass(v) {
   if (v >= 7.8) return 'a';
@@ -36,6 +41,7 @@ function ratingClass(v) {
 }
 
 export default function PlayersTable({ members, platform, clubId }) {
+  const dic = useDic();
   const [mode, setMode] = useState('season');
   const [sort, setSort] = useState({ key: 'ga', dir: 'desc' });
   const [filter, setFilter] = useState('all');
@@ -44,10 +50,7 @@ export default function PlayersTable({ members, platform, clubId }) {
   const hasCareer = useMemo(() => (members || []).some((m) => m.career), [members]);
   const effectiveMode = mode === 'season' && !hasSeason ? 'career' : mode;
 
-  const columns = useMemo(
-    () => (effectiveMode === 'season' ? [...BASE_COLUMNS, ...SEASON_ONLY] : BASE_COLUMNS),
-    [effectiveMode],
-  );
+  const columns = useMemo(() => buildColumns(dic, effectiveMode), [dic, effectiveMode]);
 
   const rows = useMemo(() => {
     const enriched = (members || [])
@@ -93,17 +96,17 @@ export default function PlayersTable({ members, platform, clubId }) {
   if (!members?.length) {
     return (
       <div className="panel pad" style={{ color: 'var(--muted)' }}>
-        A EA não devolveu o elenco deste clube agora. Tente recarregar em alguns minutos.
+        {dic.squad.empty}
       </div>
     );
   }
 
   const FILTERS = [
-    ['all', 'Todos'],
-    ['gk', 'Goleiros'],
-    ['def', 'Defesa'],
-    ['mid', 'Meio'],
-    ['att', 'Ataque'],
+    ['all', dic.squad.filters.all],
+    ['gk', dic.squad.filters.gk],
+    ['def', dic.squad.filters.def],
+    ['mid', dic.squad.filters.mid],
+    ['att', dic.squad.filters.att],
   ];
 
   return (
@@ -127,23 +130,20 @@ export default function PlayersTable({ members, platform, clubId }) {
               className={`tab ${effectiveMode === 'season' ? 'on' : ''}`}
               onClick={() => setMode('season')}
             >
-              Temporada
+              {dic.squad.season}
             </button>
             <button
               className={`tab ${effectiveMode === 'career' ? 'on' : ''}`}
               onClick={() => setMode('career')}
             >
-              Carreira
+              {dic.squad.career}
             </button>
           </div>
         )}
       </div>
 
       {effectiveMode === 'career' && (
-        <p style={{ color: 'var(--dim)', fontSize: 13 }}>
-          Na carreira a EA só publica jogos, gols, assistências, craque do jogo e nota
-          média. Os percentuais existem apenas no recorte da temporada.
-        </p>
+        <p style={{ color: 'var(--dim)', fontSize: 13 }}>{dic.squad.careerNote}</p>
       )}
 
       <div className="table-scroll">
@@ -180,7 +180,7 @@ export default function PlayersTable({ members, platform, clubId }) {
                       <span style={{ fontWeight: 620 }}>{m.name}</span>
                     )}
                     {m.proOverall ? (
-                      <span className="ovr" title="Overall do pro">
+                      <span className="ovr" title={dic.squad.cols.ovr}>
                         {m.proOverall}
                       </span>
                     ) : null}
@@ -191,7 +191,7 @@ export default function PlayersTable({ members, platform, clubId }) {
                   if (c.rating) {
                     return (
                       <td key={c.key}>
-                        <span className={`rating ${ratingClass(value)}`}>{dec(value, 2)}</span>
+                        <span className={`rating ${ratingClass(value)}`}>{dec(value, 2, dic)}</span>
                       </td>
                     );
                   }

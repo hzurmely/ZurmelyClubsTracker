@@ -3,16 +3,16 @@
 import { initials, kitColor, readableOn } from '@/lib/format';
 
 /**
- * Escudo do clube.
+ * Club crest.
  *
- * A EA não publica nenhum endereço acessível para os escudos customizados dos
- * clubes: os padrões que a comunidade usava foram todos ao ar (testei os cinco
- * conhecidos e todos dão erro), e os trackers grandes também não exibem o escudo
- * de verdade. Então em vez de ficar tentando imagens que nunca carregam, aqui o
- * escudo é desenhado com as cores reais do uniforme do clube, que a API entrega.
+ * EA publishes no reachable address for custom club crests: the patterns the
+ * community used are all down (I tried the five known ones and every single one
+ * errors out), and the big trackers do not show the real crest either. So
+ * instead of chasing images that never load, the crest here is drawn with the
+ * club real kit colours, which the API does hand over.
  *
- * Se um dia aparecer uma URL que funcione, é só voltar a renderizar um <img> e
- * usar este desenho como reserva.
+ * If a working URL ever turns up, it is just a matter of rendering an <img>
+ * again and keeping this drawing as the fallback.
  */
 export default function Crest({ club, size = 44, radius = 12 }) {
   const kit = club?.customKit || null;

@@ -3,14 +3,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Crest from '@/components/Crest';
+import { useDic } from '@/components/I18nProvider';
 import { PLATFORMS, PLATFORM_LABEL } from '@/lib/config';
 
 export default function SearchBar({
-  placeholder = 'Digite o nome do clube...',
+  placeholder = null,
   onPick = null,
   autoFocus = false,
   inline = false,
 }) {
+  const dic = useDic();
   const router = useRouter();
   const [term, setTerm] = useState('');
   const [platform, setPlatform] = useState('');
@@ -39,7 +41,7 @@ export default function SearchBar({
           { signal: controller.signal },
         );
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Busca falhou');
+        if (!res.ok) throw new Error(data.error || dic.search.failed);
         setResults(data.results || []);
         setCursor(0);
         setOpen(true);
@@ -114,15 +116,15 @@ export default function SearchBar({
           onChange={(e) => setTerm(e.target.value)}
           onFocus={() => results.length && setOpen(true)}
           onKeyDown={onKeyDown}
-          placeholder={placeholder}
-          aria-label="Buscar clube"
+          placeholder={placeholder || dic.search.placeholder}
+          aria-label={dic.search.ariaSearch}
         />
         <select
           value={platform}
           onChange={(e) => setPlatform(e.target.value)}
-          aria-label="Plataforma"
+          aria-label={dic.search.ariaPlatform}
         >
-          <option value="">Todas</option>
+          <option value="">{dic.search.all}</option>
           {PLATFORMS.map((p) => (
             <option key={p.id} value={p.id}>
               {p.short}
@@ -130,7 +132,7 @@ export default function SearchBar({
           ))}
         </select>
         <button className="btn" disabled={loading} onClick={() => setOpen(true)}>
-          {loading ? 'Buscando' : 'Buscar'}
+          {loading ? dic.search.searching : dic.search.searchBtn}
         </button>
       </div>
 
@@ -138,9 +140,7 @@ export default function SearchBar({
         <div className="results">
           {error && <div className="empty-note">{error}</div>}
           {!error && !results.length && !loading && (
-            <div className="empty-note">
-              Nenhum clube encontrado. Confira a grafia exata do nome no jogo.
-            </div>
+            <div className="empty-note">{dic.search.none}</div>
           )}
           {results.map((club, i) => (
             <button
@@ -154,7 +154,7 @@ export default function SearchBar({
                 <div className="nm">{club.name}</div>
                 <div className="meta">
                   {PLATFORM_LABEL[club.platform] || club.platform}
-                  {club.gamesPlayed ? ` · ${club.gamesPlayed} jogos` : ''}
+                  {club.gamesPlayed ? ` · ${club.gamesPlayed} ${dic.common.games}` : ''}
                 </div>
               </span>
               <span className="meta">#{club.clubId}</span>

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import SearchBar from '@/components/SearchBar';
 import Crest from '@/components/Crest';
+import { useDic } from '@/components/I18nProvider';
 import { nf, pct, dec, divisionName } from '@/lib/format';
 
 function useClub(initial) {
@@ -58,26 +59,30 @@ function derive(d) {
     divisao: o.bestDivision || 0,
     elenco: squad.length,
     avgRating,
-    artilheiro: top ? `${top.name} (${top.goals})` : '—',
+    artilheiro: top ? `${top.name} (${top.goals})` : '',
   };
 }
 
-const ROWS = [
-  { k: 'jogos', label: 'Jogos', fmt: nf, better: 'high' },
-  { k: 'vitorias', label: 'Vitórias', fmt: nf, better: 'high' },
-  { k: 'aproveitamento', label: 'Aproveitamento', fmt: pct, better: 'high' },
-  { k: 'gols', label: 'Gols marcados', fmt: nf, better: 'high' },
-  { k: 'sofridos', label: 'Gols sofridos', fmt: nf, better: 'low' },
-  { k: 'saldo', label: 'Saldo', fmt: (v) => (v > 0 ? `+${nf(v)}` : nf(v)), better: 'high' },
-  { k: 'golsPorJogo', label: 'Gols por jogo', fmt: (v) => dec(v, 2), better: 'high' },
-  { k: 'skill', label: 'Skill rating', fmt: nf, better: 'high' },
-  { k: 'divisao', label: 'Melhor divisão', fmt: divisionName, better: 'low' },
-  { k: 'elenco', label: 'Jogadores', fmt: nf, better: 'high' },
-  { k: 'avgRating', label: 'Nota média do elenco', fmt: (v) => dec(v, 2), better: 'high' },
-  { k: 'artilheiro', label: 'Artilheiro', fmt: (v) => v, better: null },
-];
+/** Rows of the comparison table. Labels come from the dictionary. */
+function buildRows(dic) {
+  const t = dic.compare.rows;
+  return [
+    { k: 'jogos', label: t.jogos, fmt: (v) => nf(v, dic), better: 'high' },
+    { k: 'vitorias', label: t.vitorias, fmt: (v) => nf(v, dic), better: 'high' },
+    { k: 'aproveitamento', label: t.aproveitamento, fmt: pct, better: 'high' },
+    { k: 'gols', label: t.gols, fmt: (v) => nf(v, dic), better: 'high' },
+    { k: 'sofridos', label: t.sofridos, fmt: (v) => nf(v, dic), better: 'low' },
+    { k: 'saldo', label: t.saldo, fmt: (v) => (v > 0 ? `+${nf(v, dic)}` : nf(v, dic)), better: 'high' },
+    { k: 'golsPorJogo', label: t.golsPorJogo, fmt: (v) => dec(v, 2, dic), better: 'high' },
+    { k: 'skill', label: t.skill, fmt: (v) => nf(v, dic), better: 'high' },
+    { k: 'divisao', label: t.divisao, fmt: (v) => divisionName(v, dic), better: 'low' },
+    { k: 'elenco', label: t.elenco, fmt: (v) => nf(v, dic), better: 'high' },
+    { k: 'avgRating', label: t.avgRating, fmt: (v) => dec(v, 2, dic), better: 'high' },
+    { k: 'artilheiro', label: t.artilheiro, fmt: (v) => v, better: null },
+  ];
+}
 
-function Slot({ label, club, loading, onPick, onClear }) {
+function Slot({ label, club, loading, onPick, onClear, dic }) {
   if (club?.info) {
     return (
       <div className="panel pad stack" style={{ gap: 12 }}>
@@ -93,7 +98,7 @@ function Slot({ label, club, loading, onPick, onClear }) {
           </div>
         </div>
         <button className="tab" onClick={onClear} style={{ alignSelf: 'flex-start' }}>
-          Trocar clube
+          {dic.myClub.change}
         </button>
       </div>
     );
@@ -107,7 +112,7 @@ function Slot({ label, club, loading, onPick, onClear }) {
       {loading ? (
         <div className="skeleton" style={{ height: 54 }} />
       ) : (
-        <SearchBar placeholder="Buscar clube..." onPick={onPick} inline />
+        <SearchBar placeholder={dic.search.placeholderShort} onPick={onPick} inline />
       )}
     </div>
   );
@@ -121,6 +126,7 @@ function parseRef(value) {
 }
 
 export default function Compare() {
+  const dic = useDic();
   const params = useSearchParams();
   const a = useClub(parseRef(params.get('a')));
   const b = useClub(parseRef(params.get('b')));
@@ -130,31 +136,32 @@ export default function Compare() {
 
   const A = derive(a.data);
   const B = derive(b.data);
+  const rows = buildRows(dic);
 
   return (
     <section className="block">
       <div className="wrap stack" style={{ gap: 24 }}>
         <div>
-          <h1 style={{ fontSize: 'clamp(28px, 5vw, 44px)' }}>Comparar clubes</h1>
-          <p style={{ color: 'var(--muted)', marginTop: 8 }}>
-            Escolha dois clubes e veja quem leva a melhor em cada número.
-          </p>
+          <h1 style={{ fontSize: 'clamp(28px, 5vw, 44px)' }}>{dic.compare.title}</h1>
+          <p style={{ color: 'var(--muted)', marginTop: 8 }}>{dic.compare.lead}</p>
         </div>
 
         <div className="grid-2">
           <Slot
-            label="Clube A"
+            label={dic.compare.clubA}
             club={A}
             loading={a.loading}
             onPick={pickA}
             onClear={() => a.setRef(null)}
+            dic={dic}
           />
           <Slot
-            label="Clube B"
+            label={dic.compare.clubB}
             club={B}
             loading={b.loading}
             onPick={pickB}
             onClear={() => b.setRef(null)}
+            dic={dic}
           />
         </div>
 
@@ -163,19 +170,19 @@ export default function Compare() {
             <table className="data" style={{ minWidth: 620 }}>
               <thead>
                 <tr>
-                  <th style={{ cursor: 'default' }}>Métrica</th>
+                  <th style={{ cursor: 'default' }}>&nbsp;</th>
                   <th style={{ cursor: 'default', textAlign: 'center' }}>{A.info.name}</th>
                   <th style={{ cursor: 'default', textAlign: 'center' }}>{B.info.name}</th>
                 </tr>
               </thead>
               <tbody>
-                {ROWS.map((r) => {
+                {rows.map((r) => {
                   const va = A[r.k];
                   const vb = B[r.k];
                   let winner = null;
                   if (r.better && typeof va === 'number' && typeof vb === 'number' && va !== vb) {
                     const aWins = r.better === 'high' ? va > vb : va < vb;
-                    // Divisão 0 significa "sem divisão", nunca é a melhor.
+                    // Division 0 means "no division", never the better one.
                     if (r.k === 'divisao' && (!va || !vb)) winner = va ? 'a' : vb ? 'b' : null;
                     else winner = aWins ? 'a' : 'b';
                   }
@@ -197,7 +204,7 @@ export default function Compare() {
           </div>
         ) : (
           <div className="panel pad" style={{ color: 'var(--muted)' }}>
-            Selecione os dois clubes acima para montar a comparação.
+            {dic.compare.pickTwo}
           </div>
         )}
       </div>

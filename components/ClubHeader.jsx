@@ -3,7 +3,7 @@ import DefinirMeuClube from '@/components/DefinirMeuClube';
 import { divisionName, kitColor, nf, pct } from '@/lib/format';
 import { PLATFORM_LABEL } from '@/lib/config';
 
-export default function ClubHeader({ info, overall, summary, platform }) {
+export default function ClubHeader({ info, overall, summary, platform, dic }) {
   const color = kitColor(info?.customKit?.kitColor1);
 
   return (
@@ -14,15 +14,15 @@ export default function ClubHeader({ info, overall, summary, platform }) {
         <div className="grow stack" style={{ gap: 10 }}>
           <div className="row row-wrap" style={{ gap: 8 }}>
             <span className="tag">{PLATFORM_LABEL[platform] || platform}</span>
-            <span className="tag">ID {info?.clubId}</span>
+            <span className="tag">
+              {dic.club.id} {info?.clubId}
+            </span>
             {info?.stadium ? <span className="tag">🏟 {info.stadium}</span> : null}
             {overall?.bestDivision ? (
-              <span className="tag hot">
-                Melhor divisão: {divisionName(overall.bestDivision)}
-              </span>
+              <span className="tag hot">{dic.club.bestDivision(divisionName(overall.bestDivision, dic))}</span>
             ) : null}
             {overall?.wstreak > 2 ? (
-              <span className="tag hot">🔥 {overall.wstreak} vitórias seguidas</span>
+              <span className="tag hot">{dic.club.winStreak(overall.wstreak)}</span>
             ) : null}
           </div>
 
@@ -33,24 +33,24 @@ export default function ClubHeader({ info, overall, summary, platform }) {
 
           <div className="row row-wrap" style={{ gap: 18, color: 'var(--muted)' }}>
             <span>
-              <strong style={{ color: 'var(--text)' }}>{nf(overall?.gamesPlayed)}</strong>{' '}
-              jogos
+              <strong style={{ color: 'var(--text)' }}>{nf(overall?.gamesPlayed, dic)}</strong>{' '}
+              {dic.common.games}
             </span>
             <span>
-              <strong style={{ color: 'var(--win)' }}>{nf(overall?.wins)}</strong> V ·{' '}
-              <strong style={{ color: 'var(--draw)' }}>{nf(overall?.ties)}</strong> E ·{' '}
-              <strong style={{ color: 'var(--loss)' }}>{nf(overall?.losses)}</strong> D
+              <strong style={{ color: 'var(--win)' }}>{nf(overall?.wins, dic)}</strong> V ·{' '}
+              <strong style={{ color: 'var(--draw)' }}>{nf(overall?.ties, dic)}</strong> E ·{' '}
+              <strong style={{ color: 'var(--loss)' }}>{nf(overall?.losses, dic)}</strong> D
             </span>
             <span>
-              Aproveitamento{' '}
+              {dic.common.winRate}{' '}
               <strong style={{ color: 'var(--text)' }}>
                 {pct(summary?.aproveitamento)}
               </strong>
             </span>
             {overall?.skillRating ? (
               <span>
-                Skill rating{' '}
-                <strong style={{ color: 'var(--text)' }}>{nf(overall.skillRating)}</strong>
+                {dic.club.skillRating}{' '}
+                <strong style={{ color: 'var(--text)' }}>{nf(overall.skillRating, dic)}</strong>
               </span>
             ) : null}
           </div>
