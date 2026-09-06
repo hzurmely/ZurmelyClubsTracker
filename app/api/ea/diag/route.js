@@ -3,17 +3,19 @@ import { HEADER_VARIANTS, buildUrl, rawFetch } from '@/lib/ea';
 
 export const dynamic = 'force-dynamic';
 
-// Nota: trocar a regiao da funcao nao resolve. A EA bloqueia as faixas de IP de
-// datacenter em geral, nao uma regiao especifica, e o plano Hobby da Vercel nem
-// respeita preferredRegion. Quem salva e o desvio pelo leitor, testado abaixo.
+// Note: changing the function region does not help. EA blocks datacenter IP
+// ranges in general, not one specific region, and the Vercel Hobby plan does not
+// even honour preferredRegion. What saves the day is the reader detour, tested
+// below.
 
 /**
- * Diagnostico. Bate na EA com cada conjunto de cabecalhos, conta o que voltou e
- * depois testa o desvio pelo leitor publico. Serve para responder rapido a
- * pergunta que sempre aparece quando o site para: "a EA esta fora do ar, ou e
- * este servidor que esta sendo bloqueado?".
+ * Diagnostics. Hits EA with each header set, reports what came back and then
+ * tests the public reader detour. It exists to quickly answer the question that
+ * always shows up when the site stops: "is EA down, or is this server being
+ * blocked?".
  *
- * Abra /api/ea/diag no navegador. Nao expoe nada sensivel, so status HTTP.
+ * Open /api/ea/diag in a browser. It exposes nothing sensitive, only HTTP
+ * statuses.
  */
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -52,7 +54,8 @@ export async function GET(request) {
 
   const direto = resultados.find((r) => r.status === 200);
 
-  // O desvio: o mesmo pedido pelo leitor publico, que sai por outra faixa de IP.
+  // The detour: the same request through the public reader, which leaves from a
+  // different IP range.
   const leitor = { testado: false };
   if (!direto) {
     const inicio = Date.now();
