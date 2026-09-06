@@ -66,11 +66,13 @@ Open <http://localhost:3000>.
 
 ## Language
 
-Two languages ship with the site: Portuguese and English. On a first visit the
-language comes from the browser `Accept-Language` header, so a Portuguese
-browser gets Portuguese and everyone else gets English. The **PT / EN** switch in
-the top bar overrides that, and the choice is stored in the `zct_lang` cookie for
-a year.
+Two languages ship with the site: Portuguese and English. **English is the
+default.** Portuguese only takes over when the browser itself is set to
+Portuguese, meaning its top `Accept-Language` preference, not merely Portuguese
+sitting somewhere down the list: a header like `es-ES,es;q=0.9,pt;q=0.5` belongs
+to someone reading Spanish who happens to accept Portuguese, and that person is
+better served in English. The **PT / EN** switch in the top bar overrides all of
+it, and the choice is stored in the `zct_lang` cookie for a year.
 
 Because the cookie is read on the server before rendering, there is no flash of
 the wrong language, and the pages that server render (club, player, match) come
@@ -90,12 +92,17 @@ every link already out there and the installed desktop program.
 
 ---
 
-## My club
+## My clubs
 
-No file to edit: open your club page and click **☆ Set as my club**. The choice
-is stored in the browser (key `zct:meu-clube`) and the club shows up in a card on
-the home page with points won, goals per game and recent form. Clicking again
-undoes it.
+No file to edit: open a club page and click **☆ Set as my club**. Up to three
+clubs fit, stored in the browser (key `zct:meus-clubes`), and each one shows up
+as a card on the home page with points won, goals per game and recent form.
+Clicking the star again, or the ✕ on the card, removes it.
+
+Three is a deliberate ceiling: every card costs a request to EA, so an unbounded
+list would turn the home page into a slow wall of cards. With three saved, the
+button on a fourth club says so instead of failing silently. Anyone who had a
+single club saved under the old key keeps it: it migrates on first read.
 
 To pin a club for everyone who opens the site, there are environment variables:
 
@@ -108,6 +115,36 @@ The ID comes from the club URL itself: `/clube/common-gen5/123456`.
 
 Accepted platforms: `common-gen5` (PS5, Xbox Series, PC), `common-gen4`
 (PS4, Xbox One) and `nx` (Switch).
+
+---
+
+## The match archive (desktop only)
+
+EA publishes roughly the last twenty league and playoff matches per club and
+drops the older ones for good. The desktop program watches that window and
+writes every match it has ever seen into
+
+```
+Documents\ZurmelyClubsTracker\historico
+```
+
+one JSON file per club, named `<platform>-<clubId>.json`. Open the program once
+a week and the archive fills itself, so the match list, the rating trend and the
+head to head reach back far beyond what the API still exposes. **File → Open the
+history folder** in the program takes you there; the files are plain JSON, so
+they copy to another machine and back up like anything else.
+
+Merging is by `matchId`, and when the same match exists on both sides the richer
+record wins, because the club page fetches without the opponent lineup while the
+match page fetches with it. Writes go to a temporary file and get renamed, so a
+crash cannot leave a truncated archive behind, and a corrupt file is treated as
+an empty one rather than taking the page down.
+
+This is desktop only, and the switch is a single environment variable:
+`ZCT_DATA_DIR`, set by `desktop/main.js`. The published site never sets it, so
+every function in `lib/arquivo.js` turns into a no-op there. That is not a
+limitation to work around: Vercel functions have a throwaway filesystem, and
+anything written would be gone on the next request.
 
 ---
 
@@ -255,7 +292,8 @@ lib/
   escalacao.js                        picks the eleven and builds the pitch
   dna.js                              radar axes, medals and archetype
   partida.js                          totals, comparison and the game reading
-  meuClube.js                         my club, stored in the browser
+  meuClube.js                         favourite clubs, stored in the browser
+  arquivo.js                          local match archive, desktop only
   format.js                           formatting (divisions, positions, colours)
   config.js                           site name, pinned club, platforms
   demo.js                             made up data for demo mode
