@@ -1,8 +1,8 @@
 {
   "name": "zurmely-clubs-tracker",
   "productName": "ZurmelyClubsTracker",
-  "version": "1.0.0",
-  "description": "Tracker de EA FC 26 Pro Clubs",
+  "version": "1.2.0",
+  "description": "Tracker de EA FC 26 Pro Clubs: elenco, escalacao ideal, leaderboards, DNA do atleta e analise de partida",
   "main": "main.js",
   "author": "hzurmely",
   "license": "MIT",
