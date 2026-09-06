@@ -5,13 +5,14 @@ import ElencosPartida from '@/components/ElencosPartida';
 import { clubInfo, matchDetail, isDemo } from '@/lib/ea';
 import { demo } from '@/lib/demo';
 import { analisarPartida } from '@/lib/partida';
+import { currentDictionary } from '@/lib/i18n/server';
 import { dec, nf } from '@/lib/format';
 
 export const revalidate = 60;
 
-function dataLonga(ts) {
+function dataLonga(ts, dic) {
   if (!ts) return '';
-  return new Date(ts * 1000).toLocaleDateString('pt-BR', {
+  return new Date(ts * 1000).toLocaleDateString(dic.htmlLang, {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -43,17 +44,18 @@ export async function generateMetadata({ params }) {
   const { platform, id, matchId } = await params;
   try {
     const { info, partida } = await buscar(platform, id, matchId);
-    if (!partida) return { title: `Partida · ${info?.name || id}` };
+    if (!partida) return { title: info?.name || `#${id}` };
     return {
       title: `${info?.name || id} ${partida.goalsFor} x ${partida.goalsAgainst} ${partida.opponent.name}`,
     };
   } catch {
-    return { title: 'Partida' };
+    return { title: `#${matchId}` };
   }
 }
 
 export default async function PartidaPage({ params }) {
   const { platform, id, matchId } = await params;
+  const dic = await currentDictionary();
   const { info, partida, todas } = await buscar(platform, id, matchId);
 
   if (!partida) {
@@ -63,20 +65,19 @@ export default async function PartidaPage({ params }) {
           <div className="banner err">
             <span>⚠️</span>
             <span>
-              Não achei essa partida no histórico de{' '}
-              <strong>{info?.name || `clube ${id}`}</strong>. A EA guarda só as últimas
-              partidas de liga e playoff, então jogos antigos somem da API com o tempo.
+              {dic.match.notFoundA} <strong>{info?.name || `#${id}`}</strong>.{' '}
+              {dic.match.notFoundHelp}
             </span>
           </div>
           <Link href={`/clube/${platform}/${id}`} className="btn ghost" style={{ alignSelf: 'flex-start' }}>
-            Voltar para o clube
+            {dic.common.backClub}
           </Link>
         </div>
       </section>
     );
   }
 
-  const analise = analisarPartida({ partida, todas, clube: info });
+  const analise = analisarPartida({ partida, todas, clube: info, dic });
   const { meu, dele } = analise.times;
   const r = analise.retrospecto;
 
@@ -84,7 +85,7 @@ export default async function PartidaPage({ params }) {
     <section className="block">
       <div className="wrap stack" style={{ gap: 26 }}>
         <Link href={`/clube/${platform}/${id}`} className="voltar">
-          ← {info?.name || `Clube ${id}`}
+          ← {info?.name || `#${id}`}
         </Link>
 
         <div className="panel pad placar">
@@ -112,9 +113,9 @@ export default async function PartidaPage({ params }) {
 
           <div className="ficha">
             <span className={`pill ${partida.result}`}>{partida.result}</span>
-            <span>{partida.matchType}</span>
+            <span>{partida.matchType === 'Playoff' ? dic.matches.playoff : dic.matches.league}</span>
             <span>·</span>
-            <span>{dataLonga(partida.timestamp)}</span>
+            <span>{dataLonga(partida.timestamp, dic)}</span>
             {partida.stadium ? (
               <>
                 <span>·</span>
@@ -126,7 +127,7 @@ export default async function PartidaPage({ params }) {
 
         {analise.leitura.length > 0 && (
           <div className="panel pad leitura">
-            <div className="leitura-selo">O JOGO</div>
+            <div className="leitura-selo">{dic.match.badge}</div>
             <ul>
               {analise.leitura.map((frase, i) => (
                 <li key={i}>{frase}</li>
@@ -140,47 +141,46 @@ export default async function PartidaPage({ params }) {
             t.mvp ? (
               <div className="leader" key={t.nome + i}>
                 <div className="grow">
-                  <div className="lbl">Melhor do {i === 0 ? 'time' : 'adversário'}</div>
+                  <div className="lbl">{i === 0 ? dic.match.mvpHome : dic.match.mvpAway}</div>
                   <div className="who">{t.mvp.name}</div>
                   <div className="lbl">
                     {t.mvp.goals ? `${t.mvp.goals}G ` : ''}
                     {t.mvp.assists ? `${t.mvp.assists}A ` : ''}
-                    {t.mvp.saves ? `${t.mvp.saves} defesas` : ''}
+                    {t.mvp.saves ? dic.match.saves(t.mvp.saves) : ''}
                     {!t.mvp.goals && !t.mvp.assists && !t.mvp.saves ? t.nome : ''}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div className="n">{dec(t.mvp.rating, 2)}</div>
-                  <div className="lbl">nota</div>
+                  <div className="n">{dec(t.mvp.rating, 2, dic)}</div>
+                  <div className="lbl">{dic.common.rating}</div>
                 </div>
               </div>
             ) : null,
           )}
           <div className="leader">
             <div className="grow">
-              <div className="lbl">Aproveitamento de finalização</div>
-              <div className="who">
-                {meu.totais.finalizacoes} {meu.totais.finalizacoes === 1 ? 'chute' : 'chutes'}
-              </div>
+              <div className="lbl">{dic.match.shotConv}</div>
+              <div className="who">{dic.match.shots(meu.totais.finalizacoes)}</div>
               <div className="lbl">{meu.nome}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div className="n">
                 {Number.isFinite(meu.totais.aproveitamentoChute)
                   ? `${Math.round(meu.totais.aproveitamentoChute)}%`
-                  : 'n/d'}
+                  : dic.common.na}
               </div>
-              <div className="lbl">viraram gol</div>
+              <div className="lbl">{dic.match.turnedIntoGoals}</div>
             </div>
           </div>
         </div>
 
         <div className="stack" style={{ gap: 12 }}>
-          <div className="panel-title">Números da partida</div>
+          <div className="panel-title">{dic.match.numbersTitle}</div>
           <ComparativoPartida
             linhas={analise.comparativo}
             nomeMeu={meu.nome}
             nomeDele={dele.nome}
+            dic={dic}
           />
         </div>
 
@@ -188,11 +188,11 @@ export default async function PartidaPage({ params }) {
 
         {r && (
           <div className="stack" style={{ gap: 12 }}>
-            <div className="panel-title">Retrospecto contra {dele.nome}</div>
+            <div className="panel-title">{dic.match.retrospectTitle(dele.nome)}</div>
             <div className="grid-3">
               <div className="stat">
-                <div className="k">Confrontos guardados</div>
-                <div className="v">{nf(r.jogos)}</div>
+                <div className="k">{dic.match.meetings}</div>
+                <div className="v">{nf(r.jogos, dic)}</div>
                 <div className="sub">
                   {r.v}V · {r.e}E · {r.d}D
                 </div>
@@ -203,19 +203,19 @@ export default async function PartidaPage({ params }) {
                 </div>
               </div>
               <div className="stat">
-                <div className="k">Saldo no confronto</div>
+                <div className="k">{dic.match.balance}</div>
                 <div className={`v ${r.golsPro - r.golsContra >= 0 ? 'good' : 'bad'}`}>
                   {r.golsPro - r.golsContra > 0 ? '+' : ''}
-                  {nf(r.golsPro - r.golsContra)}
+                  {nf(r.golsPro - r.golsContra, dic)}
                 </div>
                 <div className="sub">
-                  {r.golsPro} marcados · {r.golsContra} sofridos
+                  {r.golsPro} {dic.match.scored} · {r.golsContra} {dic.match.conceded}
                 </div>
               </div>
               <div className="stat">
-                <div className="k">Média de gols</div>
-                <div className="v">{dec(r.golsPro / r.jogos, 2)}</div>
-                <div className="sub">sofre {dec(r.golsContra / r.jogos, 2)} por jogo</div>
+                <div className="k">{dic.match.goalsAvg}</div>
+                <div className="v">{dec(r.golsPro / r.jogos, 2, dic)}</div>
+                <div className="sub">{dic.match.concedes(dec(r.golsContra / r.jogos, 2, dic))}</div>
               </div>
             </div>
 
@@ -226,10 +226,10 @@ export default async function PartidaPage({ params }) {
                     <span className={`pill ${m.result}`}>{m.result}</span>
                     <span className="grow">
                       {m.atual ? (
-                        <b>esta partida</b>
+                        <b>{dic.match.thisMatch}</b>
                       ) : (
                         <Link href={`/clube/${platform}/${id}/partida/${m.matchId}`}>
-                          {m.matchType}
+                          {m.matchType === 'Playoff' ? dic.matches.playoff : dic.matches.league}
                         </Link>
                       )}
                     </span>
@@ -241,11 +241,7 @@ export default async function PartidaPage({ params }) {
               </ul>
             </div>
 
-            <p className="nota-rodape">
-              O retrospecto sai só do que a EA ainda publica, que são as últimas partidas
-              de liga e playoff do clube. Jogos mais antigos contra esse mesmo adversário
-              podem existir e não aparecer aqui.
-            </p>
+            <p className="nota-rodape">{dic.match.retrospectNote}</p>
           </div>
         )}
       </div>
