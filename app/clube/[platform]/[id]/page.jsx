@@ -109,7 +109,7 @@ export default async function ClubPage({ params }) {
 
         <div className="stack" style={{ gap: 12 }}>
           <div className="panel-title">Últimas partidas</div>
-          <MatchList matches={dossier.matches} platform={platform} />
+          <MatchList matches={dossier.matches} platform={platform} clubId={id} />
         </div>
       </div>
     </section>
