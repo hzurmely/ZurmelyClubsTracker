@@ -2,6 +2,8 @@ import Link from 'next/link';
 import ClubHeader from '@/components/ClubHeader';
 import StatCards, { FormStrip, Leaders } from '@/components/StatCards';
 import PlayersTable from '@/components/PlayersTable';
+import BestEleven from '@/components/BestEleven';
+import Leaderboards from '@/components/Leaderboards';
 import MatchList from '@/components/MatchList';
 import SearchBar from '@/components/SearchBar';
 import { getClubDossier, summarize } from '@/lib/dossier';
@@ -84,6 +86,10 @@ export default async function ClubPage({ params }) {
         </div>
 
         <Leaders summary={summary} />
+
+        <BestEleven members={dossier.members} />
+
+        <Leaderboards members={dossier.members} />
 
         <div className="stack" style={{ gap: 12 }}>
           <div className="row spread row-wrap">
