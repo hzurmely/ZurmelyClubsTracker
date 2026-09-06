@@ -1,10 +1,10 @@
 /**
- * ZurmelyClubsTracker no desktop.
+ * ZurmelyClubsTracker on the desktop.
  *
- * O programa sobe o proprio site (a build standalone do Next, na pasta site/)
- * num servidor local e abre uma janela apontando para ele. Rodando aqui, os
- * pedidos para a EA saem do IP da sua casa, que a EA nao bloqueia, entao o
- * desvio pelo leitor publico quase nunca precisa entrar.
+ * The program brings up the site itself (Next's standalone build, in the site/
+ * folder) on a local server and opens a window pointing at it. Running here, the
+ * requests to EA go out from your home IP, which EA does not block, so the
+ * detour through the public reader almost never has to kick in.
  */
 
 const { app, BrowserWindow, shell, Menu, dialog } = require('electron');
@@ -13,8 +13,8 @@ const path = require('path');
 const net = require('net');
 const http = require('http');
 
-// Empacotado sem asar, entao os arquivos ficam soltos em resources/app e o
-// __dirname aponta para la, igual ao modo de desenvolvimento.
+// Packaged without asar, so the files sit loose in resources/app and __dirname
+// points there, just like in development mode.
 const raiz = __dirname;
 const pastaSite = path.join(raiz, 'site');
 const servidorJs = path.join(pastaSite, 'server.js');
@@ -23,7 +23,7 @@ let janela = null;
 let servidor = null;
 let endereco = null;
 
-/** Pede ao sistema uma porta livre. Evita brigar com outros programas. */
+/** Asks the system for a free port. Avoids fighting with other programs. */
 function portaLivre() {
   return new Promise((resolve, reject) => {
     const s = net.createServer();
@@ -36,7 +36,7 @@ function portaLivre() {
   });
 }
 
-/** Bate na porta ate o Next responder, ou desiste depois de uns 30 segundos. */
+/** Knocks on the port until Next answers, or gives up after about 30 seconds. */
 function esperarSubir(url, tentativas = 150) {
   return new Promise((resolve, reject) => {
     let restantes = tentativas;
@@ -60,8 +60,8 @@ async function subirServidor() {
   const porta = await portaLivre();
   endereco = `http://127.0.0.1:${porta}`;
 
-  // ELECTRON_RUN_AS_NODE faz o proprio executavel virar um node comum,
-  // entao nao precisa ter Node instalado na maquina.
+  // ELECTRON_RUN_AS_NODE turns the executable itself into a plain node, so
+  // there is no need to have Node installed on the machine.
   servidor = spawn(process.execPath, [servidorJs], {
     cwd: pastaSite,
     env: {
@@ -110,7 +110,7 @@ function criarJanela() {
   janela.loadFile(path.join(raiz, 'abrindo.html'));
   janela.once('ready-to-show', () => janela.show());
 
-  // Link para fora do site abre no navegador, nao dentro do programa.
+  // A link leading outside the site opens in the browser, not inside the program.
   janela.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: 'deny' };
@@ -127,33 +127,66 @@ function criarJanela() {
   });
 }
 
+/**
+ * Menu labels follow the system language, the same way the site follows the
+ * browser. Only two languages exist, so anything that is not Portuguese gets
+ * English.
+ */
+const MENU = {
+  pt: {
+    file: 'Arquivo',
+    reload: 'Recarregar',
+    openInBrowser: 'Abrir no navegador',
+    quit: 'Sair',
+    view: 'Exibir',
+    zoomIn: 'Aumentar',
+    zoomOut: 'Diminuir',
+    resetZoom: 'Tamanho normal',
+    fullscreen: 'Tela cheia',
+    devTools: 'Ferramentas de desenvolvedor',
+  },
+  en: {
+    file: 'File',
+    reload: 'Reload',
+    openInBrowser: 'Open in browser',
+    quit: 'Quit',
+    view: 'View',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    resetZoom: 'Actual size',
+    fullscreen: 'Full screen',
+    devTools: 'Developer tools',
+  },
+};
+
 function montarMenu() {
+  const t = String(app.getLocale() || '').toLowerCase().startsWith('pt') ? MENU.pt : MENU.en;
   const template = [
     {
-      label: 'Arquivo',
+      label: t.file,
       submenu: [
         {
-          label: 'Recarregar',
+          label: t.reload,
           accelerator: 'CmdOrCtrl+R',
           click: () => janela && endereco && janela.loadURL(endereco),
         },
         {
-          label: 'Abrir no navegador',
+          label: t.openInBrowser,
           click: () => endereco && shell.openExternal(endereco),
         },
         { type: 'separator' },
-        { role: 'quit', label: 'Sair' },
+        { role: 'quit', label: t.quit },
       ],
     },
     {
-      label: 'Exibir',
+      label: t.view,
       submenu: [
-        { role: 'zoomIn', label: 'Aumentar' },
-        { role: 'zoomOut', label: 'Diminuir' },
-        { role: 'resetZoom', label: 'Tamanho normal' },
+        { role: 'zoomIn', label: t.zoomIn },
+        { role: 'zoomOut', label: t.zoomOut },
+        { role: 'resetZoom', label: t.resetZoom },
         { type: 'separator' },
-        { role: 'togglefullscreen', label: 'Tela cheia' },
-        { role: 'toggleDevTools', label: 'Ferramentas de desenvolvedor' },
+        { role: 'togglefullscreen', label: t.fullscreen },
+        { role: 'toggleDevTools', label: t.devTools },
       ],
     },
   ];
