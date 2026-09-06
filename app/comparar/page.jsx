@@ -1,7 +1,11 @@
 import { Suspense } from 'react';
 import Compare from '@/components/Compare';
+import { currentDictionary } from '@/lib/i18n/server';
 
-export const metadata = { title: 'Comparar clubes' };
+export async function generateMetadata() {
+  const dic = await currentDictionary();
+  return { title: dic.compare.title };
+}
 
 export default function CompararPage() {
   return (
