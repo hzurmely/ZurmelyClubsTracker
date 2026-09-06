@@ -7,6 +7,7 @@ import Leaderboards from '@/components/Leaderboards';
 import MatchList from '@/components/MatchList';
 import SearchBar from '@/components/SearchBar';
 import { getClubDossier, summarize } from '@/lib/dossier';
+import { currentDictionary } from '@/lib/i18n/server';
 
 export const revalidate = 60;
 
@@ -14,14 +15,15 @@ export async function generateMetadata({ params }) {
   const { platform, id } = await params;
   try {
     const d = await getClubDossier(platform, id);
-    return { title: d.info?.name || `Clube ${id}` };
+    return { title: d.info?.name || `Club ${id}` };
   } catch {
-    return { title: `Clube ${id}` };
+    return { title: `Club ${id}` };
   }
 }
 
 export default async function ClubPage({ params }) {
   const { platform, id } = await params;
+  const dic = await currentDictionary();
   const dossier = await getClubDossier(platform, id);
 
   if (!dossier.info) {
@@ -31,17 +33,14 @@ export default async function ClubPage({ params }) {
           <div className="banner err">
             <span>⚠️</span>
             <span>
-              Não consegui carregar o clube <strong>#{id}</strong> em{' '}
+              {dic.club.notFoundA} <strong>#{id}</strong> {dic.club.notFoundB}{' '}
               <strong>{platform}</strong>. {dossier.error}
             </span>
           </div>
-          <p style={{ color: 'var(--muted)' }}>
-            Duas causas comuns: o clube está em outra plataforma, ou a API da EA está
-            instável no momento. Tente buscar de novo:
-          </p>
+          <p style={{ color: 'var(--muted)' }}>{dic.club.notFoundHelp}</p>
           <SearchBar autoFocus />
           <Link href="/" className="btn ghost" style={{ alignSelf: 'flex-start' }}>
-            Voltar para a home
+            {dic.common.backHome}
           </Link>
         </div>
       </section>
@@ -56,11 +55,7 @@ export default async function ClubPage({ params }) {
         {dossier.demo && (
           <div className="banner">
             <span>🧪</span>
-            <span>
-              Modo demonstração ligado (<code>EA_DEMO=1</code>). Estes números são
-              fictícios, só para você ver o layout. Coloque <code>EA_DEMO=0</code> no{' '}
-              <code>.env.local</code> para usar dados reais da EA.
-            </span>
+            <span>{dic.club.demo}</span>
           </div>
         )}
 
@@ -69,23 +64,24 @@ export default async function ClubPage({ params }) {
           overall={dossier.overall}
           summary={summary}
           platform={platform}
+          dic={dic}
         />
 
         {dossier.overall ? (
-          <StatCards overall={dossier.overall} summary={summary} />
+          <StatCards overall={dossier.overall} summary={summary} dic={dic} />
         ) : (
           <div className="banner err">
             <span>⚠️</span>
-            <span>As estatísticas gerais não vieram da EA nesta consulta.</span>
+            <span>{dic.club.statsMissing}</span>
           </div>
         )}
 
         <div className="stack" style={{ gap: 12 }}>
-          <div className="panel-title">Forma recente</div>
-          <FormStrip form={summary.form} />
+          <div className="panel-title">{dic.club.recentForm}</div>
+          <FormStrip form={summary.form} dic={dic} />
         </div>
 
-        <Leaders summary={summary} />
+        <Leaders summary={summary} dic={dic} />
 
         <BestEleven members={dossier.members} platform={platform} clubId={id} />
 
@@ -94,22 +90,27 @@ export default async function ClubPage({ params }) {
         <div className="stack" style={{ gap: 12 }}>
           <div className="row spread row-wrap">
             <div className="panel-title" style={{ margin: 0 }}>
-              Elenco · {dossier.members.length} jogadores
+              {dic.club.squad(dossier.members.length)}
             </div>
             <Link
               href={`/comparar?a=${platform}:${id}`}
               className="btn ghost"
               style={{ padding: '8px 16px' }}
             >
-              Comparar com outro clube
+              {dic.club.compareWith}
             </Link>
           </div>
           <PlayersTable members={dossier.members} platform={platform} clubId={id} />
         </div>
 
         <div className="stack" style={{ gap: 12 }}>
-          <div className="panel-title">Últimas partidas</div>
-          <MatchList matches={dossier.matches} platform={platform} clubId={id} />
+          <div className="panel-title">{dic.club.lastMatches}</div>
+          <MatchList
+            matches={dossier.matches}
+            platform={platform}
+            clubId={id}
+            dic={dic}
+          />
         </div>
       </div>
     </section>
