@@ -4,8 +4,9 @@ import { getClubDossier, summarize } from '@/lib/dossier';
 export const dynamic = 'force-dynamic';
 
 /**
- * Versão enxuta do dossiê, só com o que o cartão "Meu clube" da home mostra.
- * Existe para o cartão não precisar baixar o elenco inteiro e o histórico.
+ * A trimmed down dossier, carrying only what the "My club" card on the home
+ * page shows. It exists so that card does not have to download the whole squad
+ * and match history.
  */
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
