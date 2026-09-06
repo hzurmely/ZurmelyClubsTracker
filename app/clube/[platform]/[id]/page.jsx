@@ -87,9 +87,9 @@ export default async function ClubPage({ params }) {
 
         <Leaders summary={summary} />
 
-        <BestEleven members={dossier.members} />
+        <BestEleven members={dossier.members} platform={platform} clubId={id} />
 
-        <Leaderboards members={dossier.members} />
+        <Leaderboards members={dossier.members} platform={platform} clubId={id} />
 
         <div className="stack" style={{ gap: 12 }}>
           <div className="row spread row-wrap">
@@ -104,7 +104,7 @@ export default async function ClubPage({ params }) {
               Comparar com outro clube
             </Link>
           </div>
-          <PlayersTable members={dossier.members} />
+          <PlayersTable members={dossier.members} platform={platform} clubId={id} />
         </div>
 
         <div className="stack" style={{ gap: 12 }}>
