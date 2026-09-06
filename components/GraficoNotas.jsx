@@ -145,7 +145,14 @@ export default function GraficoNotas({ partidas, media }) {
                 </title>
               </circle>
               {rotulados.has(i) && (
-                <text x={x(i)} y={y(p.rating) - 12} textAnchor="middle" className="gn-valor">
+                // Nota colada no teto do gráfico ganha o rótulo por baixo, senão
+                // o texto sai pela borda de cima e fica cortado.
+                <text
+                  x={x(i)}
+                  y={y(p.rating) - T > 16 ? y(p.rating) - 12 : y(p.rating) + 19}
+                  textAnchor="middle"
+                  className="gn-valor"
+                >
                   {p.rating.toFixed(2).replace('.', ',')}
                 </text>
               )}
