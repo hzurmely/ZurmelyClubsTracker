@@ -14,8 +14,8 @@ export async function GET(request) {
     return NextResponse.json({ results: [], demo: isDemo() });
   }
 
-  // Quais pools consultar. Sem plataforma definida, varremos todas em paralelo
-  // (e assim o usuário acha o clube mesmo sem saber o console).
+  // Which pools to query. With no platform set we sweep all of them in
+  // parallel, so the club turns up even when nobody remembers the console.
   const pools = platform ? [platform] : PLATFORMS.map((p) => p.id);
 
   if (isDemo()) {
@@ -39,7 +39,7 @@ export async function GET(request) {
     );
   }
 
-  // Clubes com mais jogos primeiro: normalmente é o que a pessoa procura.
+  // Clubs with more games first: usually that is the one being looked for.
   results.sort((a, b) => b.gamesPlayed - a.gamesPlayed);
 
   return NextResponse.json({ results: results.slice(0, 40), demo: false });
