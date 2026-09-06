@@ -61,7 +61,12 @@ export default function MeuClube() {
     return (
       <section className="block">
         <div className="wrap">
-          <div className="banner">
+          {/* A faixa acompanha o tamanho do texto e fica centrada, em vez de
+              esticar de ponta a ponta e deixar um vazio grande à direita. */}
+          <div
+            className="banner"
+            style={{ width: 'fit-content', maxWidth: '100%', margin: '0 auto', alignItems: 'center' }}
+          >
             <span>⭐</span>
             <span>
               Quer o seu clube fixo aqui na home? Busque ele acima, abra a página dele
