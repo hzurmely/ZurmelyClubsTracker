@@ -2,6 +2,7 @@ import Link from 'next/link';
 import DnaAtleta from '@/components/DnaAtleta';
 import { getClubDossier } from '@/lib/dossier';
 import { perfilDoJogador } from '@/lib/dna';
+import { currentDictionary } from '@/lib/i18n/server';
 import { initials, posLabel, posGroup } from '@/lib/format';
 
 export const revalidate = 60;
@@ -11,7 +12,7 @@ export async function generateMetadata({ params }) {
   const jogador = decodeURIComponent(nome);
   try {
     const d = await getClubDossier(platform, id);
-    return { title: `${jogador} · ${d.info?.name || `Clube ${id}`}` };
+    return { title: `${jogador} · ${d.info?.name || `Club ${id}`}` };
   } catch {
     return { title: jogador };
   }
@@ -20,6 +21,7 @@ export async function generateMetadata({ params }) {
 export default async function JogadorPage({ params }) {
   const { platform, id, nome } = await params;
   const alvo = decodeURIComponent(nome);
+  const dic = await currentDictionary();
   const dossier = await getClubDossier(platform, id);
 
   const base = perfilDoJogador({
@@ -27,6 +29,7 @@ export default async function JogadorPage({ params }) {
     matches: dossier.matches,
     nome: alvo,
     modo: 'season',
+    dic,
   });
 
   if (!base) {
@@ -36,14 +39,12 @@ export default async function JogadorPage({ params }) {
           <div className="banner err">
             <span>⚠️</span>
             <span>
-              Não encontrei <strong>{alvo}</strong> no elenco de{' '}
-              <strong>{dossier.info?.name || `clube ${id}`}</strong>. A EA só devolve os
-              jogadores com partidas registradas, então quem saiu do clube ou ainda não
-              jogou não aparece.
+              {dic.dna.notFoundA} <strong>{alvo}</strong> {dic.dna.notFoundB}{' '}
+              <strong>{dossier.info?.name || `#${id}`}</strong>. {dic.dna.notFoundHelp}
             </span>
           </div>
           <Link href={`/clube/${platform}/${id}`} className="btn ghost" style={{ alignSelf: 'flex-start' }}>
-            Voltar para o clube
+            {dic.common.backClub}
           </Link>
         </div>
       </section>
@@ -55,10 +56,12 @@ export default async function JogadorPage({ params }) {
     matches: dossier.matches,
     nome: alvo,
     modo: 'career',
+    dic,
   });
 
-  // O radar e o histórico são os mesmos nos dois recortes. Só as estatísticas e
-  // as medalhas trocam, então é só isso que viaja duplicado para o navegador.
+  // The radar and the history are the same in both views. Only the stats and
+  // the medals change, so that is the only thing duplicated on the way to the
+  // browser.
   const perfil = {
     jogador: base.jogador,
     temTemporada: base.temTemporada,
@@ -84,19 +87,19 @@ export default async function JogadorPage({ params }) {
     <section className="block">
       <div className="wrap stack" style={{ gap: 26 }}>
         <Link href={`/clube/${platform}/${id}`} className="voltar">
-          ← {dossier.info?.name || `Clube ${id}`}
+          ← {dossier.info?.name || `#${id}`}
         </Link>
 
         <DnaAtleta
           perfil={perfil}
           platform={platform}
           clubId={id}
-          clubName={dossier.info?.name || `Clube ${id}`}
+          clubName={dossier.info?.name || `#${id}`}
         />
 
         {companheiros.length > 0 && (
           <div className="stack" style={{ gap: 12 }}>
-            <div className="panel-title">Resto do elenco</div>
+            <div className="panel-title">{dic.dna.teammates}</div>
             <div className="colegas">
               {companheiros.map((m) => (
                 <Link
