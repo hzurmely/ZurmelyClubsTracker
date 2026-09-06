@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { posLabel, posGroup, dec, pct, nf } from '@/lib/format';
 
 /**
@@ -34,7 +35,7 @@ function ratingClass(v) {
   return 'c';
 }
 
-export default function PlayersTable({ members }) {
+export default function PlayersTable({ members, platform, clubId }) {
   const [mode, setMode] = useState('season');
   const [sort, setSort] = useState({ key: 'ga', dir: 'desc' });
   const [filter, setFilter] = useState('all');
@@ -168,7 +169,16 @@ export default function PlayersTable({ members }) {
                 <td>
                   <span className="player-cell">
                     <span className={`poschip ${m.group}`}>{posLabel(m.pos)}</span>
-                    <span style={{ fontWeight: 620 }}>{m.name}</span>
+                    {platform && clubId ? (
+                      <Link
+                        href={`/clube/${platform}/${clubId}/jogador/${encodeURIComponent(m.name)}`}
+                        className="link-jogador"
+                      >
+                        {m.name}
+                      </Link>
+                    ) : (
+                      <span style={{ fontWeight: 620 }}>{m.name}</span>
+                    )}
                     {m.proOverall ? (
                       <span className="ovr" title="Overall do pro">
                         {m.proOverall}

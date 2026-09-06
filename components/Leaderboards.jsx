@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { normalizar } from '@/lib/escalacao';
 import { dec, initials, nf, pct, posLabel, posGroup } from '@/lib/format';
 
@@ -24,7 +25,7 @@ const ABAS = [
  * clube for pequeno demais para o corte fazer sentido, ele é dispensado e o
  * aviso muda, em vez de a tabela aparecer vazia.
  */
-export default function Leaderboards({ members }) {
+export default function Leaderboards({ members, platform, clubId }) {
   const [abaId, setAbaId] = useState('nota');
   const [modo, setModo] = useState('season');
 
@@ -104,19 +105,28 @@ export default function Leaderboards({ members }) {
           </div>
         ) : (
           <ol className="lb">
-            {linhas.map((j, i) => (
-              <li key={j.name} className="lb-item">
-                <span className={`lb-pos ${i < 3 ? `top${i + 1}` : ''}`}>{i + 1}</span>
-                <span className={`lb-ini ${posGroup(j.pos)}`}>{initials(j.name)}</span>
-                <span className="grow">
-                  <span className="lb-nome">{j.name}</span>
-                  <span className="lb-sub">
-                    {posLabel(j.pos)} · {nf(j.jogos)} jogos
-                  </span>
-                </span>
-                <span className="lb-valor">{aba.fmt(j[aba.campo] || 0)}</span>
-              </li>
-            ))}
+            {linhas.map((j, i) => {
+              const Caixa = platform && clubId ? Link : 'span';
+              const extra =
+                Caixa === Link
+                  ? { href: `/clube/${platform}/${clubId}/jogador/${encodeURIComponent(j.name)}` }
+                  : {};
+              return (
+                <li key={j.name}>
+                  <Caixa className="lb-item" {...extra}>
+                    <span className={`lb-pos ${i < 3 ? `top${i + 1}` : ''}`}>{i + 1}</span>
+                    <span className={`lb-ini ${posGroup(j.pos)}`}>{initials(j.name)}</span>
+                    <span className="grow">
+                      <span className="lb-nome">{j.name}</span>
+                      <span className="lb-sub">
+                        {posLabel(j.pos)} · {nf(j.jogos)} jogos
+                      </span>
+                    </span>
+                    <span className="lb-valor">{aba.fmt(j[aba.campo] || 0)}</span>
+                  </Caixa>
+                </li>
+              );
+            })}
           </ol>
         )}
       </div>

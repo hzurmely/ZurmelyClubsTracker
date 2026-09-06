@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { FORMACOES, montarEscalacao } from '@/lib/escalacao';
 import { dec, initials, nf, posLabel } from '@/lib/format';
 
@@ -14,7 +15,7 @@ function classeNota(v) {
  * O campinho com o time ideal. Quem escolhe os onze é o lib/escalacao.js; aqui
  * é só a apresentação, mais a troca de formação e de recorte.
  */
-export default function BestEleven({ members }) {
+export default function BestEleven({ members, platform, clubId }) {
   const [formacaoId, setFormacaoId] = useState('3-5-2');
   const [modo, setModo] = useState('season');
 
@@ -85,8 +86,15 @@ export default function BestEleven({ members }) {
           <span className="area baixo" />
         </div>
 
-        {escalacao.map((vaga, i) => (
-          <div
+        {escalacao.map((vaga, i) => {
+          // Cada card leva para o DNA do jogador quando sabemos de que clube ele é.
+          const Caixa = vaga.jogador && platform && clubId ? Link : 'div';
+          const extra =
+            Caixa === Link
+              ? { href: `/clube/${platform}/${clubId}/jogador/${encodeURIComponent(vaga.jogador.name)}` }
+              : {};
+          return (
+          <Caixa
             key={i}
             className="spot"
             style={{ left: `${vaga.x}%`, top: `${vaga.y}%` }}
@@ -95,6 +103,7 @@ export default function BestEleven({ members }) {
                 ? `${vaga.jogador.name} · ${nf(vaga.jogador.jogos)} jogos · nota ${dec(vaga.jogador.nota, 2)}`
                 : 'Sem jogador para esta vaga'
             }
+            {...extra}
           >
             {vaga.jogador ? (
               <>
@@ -118,8 +127,9 @@ export default function BestEleven({ members }) {
                 <div className="spot-pos">vaga livre</div>
               </>
             )}
-          </div>
-        ))}
+          </Caixa>
+          );
+        })}
       </div>
 
       <p style={{ color: 'var(--dim)', fontSize: 13, margin: 0 }}>
