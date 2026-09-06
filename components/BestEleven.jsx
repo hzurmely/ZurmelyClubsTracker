@@ -22,7 +22,7 @@ export default function BestEleven({ members }) {
   const temCarreira = useMemo(() => (members || []).some((m) => m.career), [members]);
   const modoEfetivo = modo === 'season' && !temTemporada ? 'career' : modo;
 
-  const { escalacao, reservas, media, elenco } = useMemo(
+  const { escalacao, reservas, media, elenco, automatica } = useMemo(
     () => montarEscalacao(members, formacaoId, modoEfetivo),
     [members, formacaoId, modoEfetivo],
   );
@@ -57,17 +57,23 @@ export default function BestEleven({ members }) {
             </div>
           )}
 
-          <div className="tabs">
-            {Object.keys(FORMACOES).map((id) => (
-              <button
-                key={id}
-                className={`tab ${formacaoId === id ? 'on' : ''}`}
-                onClick={() => setFormacaoId(id)}
-              >
-                {id}
-              </button>
-            ))}
-          </div>
+          {automatica ? (
+            <span className="tag" title="O elenco tem menos de onze jogadores com partidas, então o campo segue o elenco em vez de uma formação fixa.">
+              formação automática
+            </span>
+          ) : (
+            <div className="tabs">
+              {Object.keys(FORMACOES).map((id) => (
+                <button
+                  key={id}
+                  className={`tab ${formacaoId === id ? 'on' : ''}`}
+                  onClick={() => setFormacaoId(id)}
+                >
+                  {id}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -120,8 +126,10 @@ export default function BestEleven({ members }) {
         Os onze saem da nota média de cada jogador ajustada pelo número de jogos, para
         que quem jogou pouco não passe na frente de quem sustenta o nível. A média do
         elenco é {dec(media, 2)}, calculada sobre {nf(elenco)} jogadores.
+        {automatica &&
+          ' A EA só devolve os jogadores com partidas registradas, e aqui vieram menos de onze, então o campo segue o elenco em vez de uma formação fixa.'}
         {improvisos > 0 && ` ${improvisos} ${improvisos === 1 ? 'vaga foi preenchida' : 'vagas foram preenchidas'} fora de posição por falta de gente no setor.`}
-        {vazias > 0 && ` ${vazias} ${vazias === 1 ? 'vaga ficou livre' : 'vagas ficaram livres'}: o elenco tem menos de onze jogadores com partidas registradas.`}
+        {vazias > 0 && ` ${vazias} ${vazias === 1 ? 'vaga ficou livre' : 'vagas ficaram livres'}.`}
       </p>
 
       {reservas.length > 0 && (
