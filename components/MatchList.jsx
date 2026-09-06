@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Crest from '@/components/Crest';
 import { timeAgo, dec, posLabel } from '@/lib/format';
 
-export default function MatchList({ matches, platform }) {
+export default function MatchList({ matches, platform, clubId }) {
   if (!matches?.length) {
     return (
       <div className="panel pad" style={{ color: 'var(--muted)' }}>
@@ -48,6 +48,17 @@ export default function MatchList({ matches, platform }) {
           </summary>
 
           <div style={{ padding: '0 16px 16px' }}>
+            {clubId ? (
+              <div className="row" style={{ justifyContent: 'flex-end', paddingBottom: 10 }}>
+                <Link
+                  href={`/clube/${platform}/${clubId}/partida/${m.matchId}`}
+                  className="btn ghost"
+                  style={{ padding: '7px 14px', fontSize: 13 }}
+                >
+                  Análise completa da partida
+                </Link>
+              </div>
+            ) : null}
             <table className="mini-table">
               <thead>
                 <tr>
