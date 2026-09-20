@@ -24,11 +24,26 @@ function Cartao({ escolha, dic }) {
     let vivo = true;
     setEstado('carregando');
     fetch(`/api/ea/meu-clube?platform=${escolha.platform}&id=${escolha.id}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no data'))))
-      .then((d) => {
+      .then(async (r) => {
+        if (r.ok) return { ok: true, dados: await r.json() };
+        // A club that is gone from EA reads differently from EA being down, and
+        // the card says so: one is worth retrying, the other never will be.
+        let corpo = null;
+        try {
+          corpo = await r.json();
+        } catch {
+          corpo = null;
+        }
+        return { ok: false, sumiu: !!corpo?.sumiu };
+      })
+      .then((res) => {
         if (!vivo) return;
-        setDados(d);
-        setEstado('pronto');
+        if (res.ok) {
+          setDados(res.dados);
+          setEstado('pronto');
+        } else {
+          setEstado(res.sumiu ? 'sumiu' : 'erro');
+        }
       })
       .catch(() => vivo && setEstado('erro'));
     return () => {
@@ -42,6 +57,21 @@ function Cartao({ escolha, dic }) {
     return (
       <div className="panel pad" style={{ color: 'var(--muted)' }}>
         {dic.myClub.loading(nome)}
+      </div>
+    );
+  }
+
+  if (estado === 'sumiu') {
+    return (
+      <div className="panel pad row row-wrap" style={{ gap: 12, color: 'var(--muted)' }}>
+        <span className="grow">{dic.myClub.gone(nome)}</span>
+        <button
+          type="button"
+          className="btn ghost"
+          onClick={() => limparMeuClube(escolha.id, escolha.platform)}
+        >
+          {dic.myClub.forget}
+        </button>
       </div>
     );
   }
