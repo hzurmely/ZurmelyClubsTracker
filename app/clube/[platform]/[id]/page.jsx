@@ -67,6 +67,13 @@ export default async function ClubPage({ params }) {
           </div>
         )}
 
+        {dossier.info.somenteArquivo && (
+          <div className="banner">
+            <span>📦</span>
+            <span>{dic.club.archiveOnly}</span>
+          </div>
+        )}
+
         <ClubHeader
           info={dossier.info}
           overall={dossier.overall}
@@ -78,10 +85,14 @@ export default async function ClubPage({ params }) {
         {dossier.overall ? (
           <StatCards overall={dossier.overall} summary={summary} dic={dic} />
         ) : (
-          <div className="banner err">
-            <span>⚠️</span>
-            <span>{dic.club.statsMissing}</span>
-          </div>
+          // On an archive only club the banner above has already said why the
+          // stats are missing, so repeating it here would be noise.
+          !dossier.info.somenteArquivo && (
+            <div className="banner err">
+              <span>⚠️</span>
+              <span>{dic.club.statsMissing}</span>
+            </div>
+          )
         )}
 
         <div className="stack" style={{ gap: 12 }}>
