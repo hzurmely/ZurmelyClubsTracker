@@ -33,11 +33,19 @@ export default async function ClubPage({ params }) {
           <div className="banner err">
             <span>⚠️</span>
             <span>
-              {dic.club.notFoundA} <strong>#{id}</strong> {dic.club.notFoundB}{' '}
-              <strong>{platform}</strong>. {dossier.error}
+              {dossier.sumiu ? (
+                dic.club.goneTitle(id)
+              ) : (
+                <>
+                  {dic.club.notFoundA} <strong>#{id}</strong> {dic.club.notFoundB}{' '}
+                  <strong>{platform}</strong>. {dossier.error}
+                </>
+              )}
             </span>
           </div>
-          <p style={{ color: 'var(--muted)' }}>{dic.club.notFoundHelp}</p>
+          <p style={{ color: 'var(--muted)' }}>
+            {dossier.sumiu ? dic.club.goneHelp : dic.club.notFoundHelp}
+          </p>
           <SearchBar autoFocus />
           <Link href="/" className="btn ghost" style={{ alignSelf: 'flex-start' }}>
             {dic.common.backHome}
