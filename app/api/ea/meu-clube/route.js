@@ -19,7 +19,12 @@ export async function GET(request) {
 
   const dossier = await getClubDossier(platform, id);
   if (!dossier.info) {
-    return NextResponse.json({ erro: dossier.error || 'Clube não encontrado' }, { status: 502 });
+    // sumiu tells the card the club is gone for good, so it offers to forget it
+    // instead of a "try again" that can never work.
+    return NextResponse.json(
+      { erro: dossier.error || 'Clube não encontrado', sumiu: !!dossier.sumiu },
+      { status: 502 },
+    );
   }
 
   const resumo = summarize(dossier);
