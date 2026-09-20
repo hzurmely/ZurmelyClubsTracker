@@ -14,34 +14,86 @@ export const dynamic = 'force-dynamic';
  * always shows up when the site stops: "is EA down, or is this server being
  * blocked?".
  *
- * Open /api/ea/diag in a browser. It exposes nothing sensitive, only HTTP
- * statuses.
+ * Any endpoint can be aimed at, which is what makes it useful when one call
+ * disagrees with the others:
+ *
+ *   /api/ea/diag
+ *   /api/ea/diag?path=/clubs/info&clubIds=8485566
+ *   /api/ea/diag?path=/clubs/matches&clubIds=8485566&matchType=leagueMatch
+ *
+ * The reader is tried twice, once plainly and once with a throwaway parameter
+ * on the end of the EA address. If those two disagree, something between here
+ * and EA is answering from a copy it kept.
+ *
+ * It exposes nothing sensitive, only HTTP statuses and the first line of each
+ * answer.
  */
+const CAMINHOS = new Set([
+  '/allTimeLeaderboard/search',
+  '/clubs/info',
+  '/clubs/overallStats',
+  '/clubs/matches',
+  '/members/stats',
+  '/members/career/stats',
+]);
+
+const PARAMETROS = ['platform', 'clubIds', 'clubId', 'clubName', 'matchType', 'maxResultCount'];
+
+const EA_DIRETO = 'https://proclubs.ea.com/api/fc';
+
+function resumo(texto) {
+  let itens = null;
+  try {
+    const parsed = JSON.parse(texto);
+    if (Array.isArray(parsed)) itens = parsed.length;
+    else if (parsed && typeof parsed === 'object') itens = Object.keys(parsed).length;
+  } catch {
+    itens = null;
+  }
+  return { itens, amostra: texto.slice(0, 120) };
+}
+
+async function pelaLeitura(alvo) {
+  const inicio = Date.now();
+  try {
+    const r = await fetch('https://r.jina.ai/' + alvo, {
+      headers: { 'x-return-format': 'text', 'x-no-cache': 'true' },
+      cache: 'no-store',
+    });
+    const texto = await r.text();
+    return { status: r.status, ms: Date.now() - inicio, ...resumo(texto) };
+  } catch (err) {
+    return { erro: String(err?.message || err), ms: Date.now() - inicio };
+  }
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const platform = searchParams.get('platform') || 'common-gen5';
-  const clubName = searchParams.get('q') || 'elite';
 
-  const url = buildUrl('/allTimeLeaderboard/search', { platform, clubName });
+  const pedido = searchParams.get('path') || '/allTimeLeaderboard/search';
+  const path = CAMINHOS.has(pedido) ? pedido : '/allTimeLeaderboard/search';
+
+  const params = { platform: searchParams.get('platform') || 'common-gen5' };
+  for (const nome of PARAMETROS) {
+    const valor = searchParams.get(nome);
+    if (valor) params[nome] = valor;
+  }
+  if (path === '/allTimeLeaderboard/search' && !params.clubName) {
+    params.clubName = searchParams.get('q') || 'elite';
+  }
+
+  const url = buildUrl(path, params);
 
   const resultados = [];
   for (let i = 0; i < HEADER_VARIANTS.length; i += 1) {
     const inicio = Date.now();
     try {
       const r = await rawFetch(url, i);
-      let itens = null;
-      try {
-        const parsed = JSON.parse(r.text);
-        itens = Array.isArray(parsed) ? parsed.length : null;
-      } catch {
-        itens = null;
-      }
       resultados.push({
         variante: HEADER_VARIANTS[i].id,
         status: r.status,
         ms: Date.now() - inicio,
-        itens,
-        amostra: r.text.slice(0, 120),
+        ...resumo(r.text),
       });
     } catch (err) {
       resultados.push({
@@ -54,55 +106,36 @@ export async function GET(request) {
 
   const direto = resultados.find((r) => r.status === 200);
 
-  // The detour: the same request through the public reader, which leaves from a
-  // different IP range.
-  const leitor = { testado: false };
-  if (!direto) {
-    const inicio = Date.now();
-    leitor.testado = true;
-    try {
-      const alvo =
-        'https://r.jina.ai/https://proclubs.ea.com/api/fc/allTimeLeaderboard/search' +
-        '?platform=' + encodeURIComponent(platform) +
-        '&clubName=' + encodeURIComponent(clubName);
-      const r = await fetch(alvo, {
-        headers: { 'x-return-format': 'text', 'x-no-cache': 'true' },
-        cache: 'no-store',
-      });
-      const texto = await r.text();
-      let itens = null;
-      try {
-        const parsed = JSON.parse(texto);
-        itens = Array.isArray(parsed) ? parsed.length : null;
-      } catch {
-        itens = null;
-      }
-      leitor.status = r.status;
-      leitor.ms = Date.now() - inicio;
-      leitor.itens = itens;
-      leitor.amostra = texto.slice(0, 120);
-    } catch (err) {
-      leitor.erro = String(err?.message || err);
-      leitor.ms = Date.now() - inicio;
-    }
-  }
+  const alvo = buildUrl(path, params, EA_DIRETO);
+  const alvoUnico = buildUrl(path, { ...params, _: Date.now() }, EA_DIRETO);
+
+  const leitor = await pelaLeitura(alvo);
+  const leitorUnico = await pelaLeitura(alvoUnico);
+
+  const guardado =
+    leitor.amostra !== undefined &&
+    leitorUnico.amostra !== undefined &&
+    leitor.amostra !== leitorUnico.amostra;
 
   let veredito;
   if (direto) {
-    veredito = 'Funcionando direto, com a variante "' + direto.variante + '".';
+    veredito = 'Direct path works, with the "' + direto.variante + '" header set.';
+  } else if (guardado) {
+    veredito =
+      'The reader answers, but the plain address and the unique one disagree: something in between is replaying a copy it kept. The unique address is the one to trust.';
   } else if (leitor.itens) {
-    veredito =
-      'A EA esta bloqueando o IP deste servidor, mas o desvio pelo leitor esta funcionando. O site continua de pe.';
+    veredito = 'EA blocks this server IP, the reader detour works. The site is up.';
   } else {
-    veredito =
-      'Nem o caminho direto nem o desvio passaram. Ou a EA esta fora, ou o leitor esta indisponivel.';
+    veredito = 'Neither path got through. Either EA is down or the reader is unavailable.';
   }
 
   return NextResponse.json({
     url,
     regiao: process.env.VERCEL_REGION || 'local',
     veredito,
+    guardado,
     direto: resultados,
     leitor,
+    leitorUnico,
   });
 }
