@@ -66,7 +66,7 @@ export async function GET(request) {
         '?platform=' + encodeURIComponent(platform) +
         '&clubName=' + encodeURIComponent(clubName);
       const r = await fetch(alvo, {
-        headers: { 'x-return-format': 'text' },
+        headers: { 'x-return-format': 'text', 'x-no-cache': 'true' },
         cache: 'no-store',
       });
       const texto = await r.text();
