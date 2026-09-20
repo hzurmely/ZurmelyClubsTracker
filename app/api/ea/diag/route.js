@@ -28,7 +28,7 @@ export async function GET(request) {
   for (let i = 0; i < HEADER_VARIANTS.length; i += 1) {
     const inicio = Date.now();
     try {
-      const r = await rawFetch(url, i, 0);
+      const r = await rawFetch(url, i);
       let itens = null;
       try {
         const parsed = JSON.parse(r.text);
