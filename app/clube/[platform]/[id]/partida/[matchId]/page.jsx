@@ -6,7 +6,7 @@ import { clubInfo, matchDetail, isDemo } from '@/lib/ea';
 import { demo } from '@/lib/demo';
 import { analisarPartida } from '@/lib/partida';
 import { currentDictionary } from '@/lib/i18n/server';
-import { dec, nf } from '@/lib/format';
+import { dec, nf, resultLetter } from '@/lib/format';
 
 export const revalidate = 60;
 
@@ -112,7 +112,7 @@ export default async function PartidaPage({ params }) {
           </div>
 
           <div className="ficha">
-            <span className={`pill ${partida.result}`}>{partida.result}</span>
+            <span className={`pill ${partida.result}`}>{resultLetter(partida.result, dic)}</span>
             <span>{partida.matchType === 'Playoff' ? dic.matches.playoff : dic.matches.league}</span>
             <span>·</span>
             <span>{dataLonga(partida.timestamp, dic)}</span>
@@ -194,7 +194,10 @@ export default async function PartidaPage({ params }) {
                 <div className="k">{dic.match.meetings}</div>
                 <div className="v">{nf(r.jogos, dic)}</div>
                 <div className="sub">
-                  {r.v}V · {r.e}E · {r.d}D
+                  {r.v}
+                  {resultLetter('V', dic)} · {r.e}
+                  {resultLetter('E', dic)} · {r.d}
+                  {resultLetter('D', dic)}
                 </div>
                 <div className="bar">
                   <i className="w" style={{ width: `${(r.v / r.jogos) * 100}%` }} />
@@ -223,7 +226,7 @@ export default async function PartidaPage({ params }) {
               <ul className="confrontos">
                 {r.lista.map((m) => (
                   <li key={m.matchId} className={m.atual ? 'atual' : ''}>
-                    <span className={`pill ${m.result}`}>{m.result}</span>
+                    <span className={`pill ${m.result}`}>{resultLetter(m.result, dic)}</span>
                     <span className="grow">
                       {m.atual ? (
                         <b>{dic.match.thisMatch}</b>
