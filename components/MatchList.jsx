@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Crest from '@/components/Crest';
 import { useDic } from '@/components/I18nProvider';
-import { timeAgo, dec, posLabel } from '@/lib/format';
+import { timeAgo, dec, posLabel, resultLetter } from '@/lib/format';
 
 /** How many matches appear at once, and how many each "show more" adds. */
 const PASSO = 15;
@@ -39,7 +39,7 @@ export default function MatchList({ matches, platform, clubId, arquivadas = 0 })
         <details className="mdetail" key={m.matchId}>
           <summary>
             <div className="match">
-              <span className={`pill ${m.result}`}>{m.result}</span>
+              <span className={`pill ${m.result}`}>{resultLetter(m.result, dic)}</span>
               <span className="grow">
                 <span className="row" style={{ gap: 10 }}>
                   <Crest club={m.opponent} size={26} radius={8} />
@@ -54,7 +54,7 @@ export default function MatchList({ matches, platform, clubId, arquivadas = 0 })
                   </span>
                 </span>
                 <span className="when">
-                  {timeAgo(m.timestamp)}
+                  {timeAgo(m.timestamp, dic)}
                   {m.matchType ? (
                     <span className="mtype">
                       {m.matchType === 'Playoff' ? dic.matches.playoff : dic.matches.league}

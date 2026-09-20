@@ -1,6 +1,6 @@
 import Crest from '@/components/Crest';
 import DefinirMeuClube from '@/components/DefinirMeuClube';
-import { divisionName, kitColor, nf, pct } from '@/lib/format';
+import { divisionName, kitColor, nf, pct, resultLetter } from '@/lib/format';
 import { PLATFORM_LABEL } from '@/lib/config';
 
 export default function ClubHeader({ info, overall, summary, platform, dic }) {
@@ -37,9 +37,12 @@ export default function ClubHeader({ info, overall, summary, platform, dic }) {
               {dic.common.games}
             </span>
             <span>
-              <strong style={{ color: 'var(--win)' }}>{nf(overall?.wins, dic)}</strong> V ·{' '}
-              <strong style={{ color: 'var(--draw)' }}>{nf(overall?.ties, dic)}</strong> E ·{' '}
-              <strong style={{ color: 'var(--loss)' }}>{nf(overall?.losses, dic)}</strong> D
+              <strong style={{ color: 'var(--win)' }}>{nf(overall?.wins, dic)}</strong>{' '}
+              {resultLetter('V', dic)} ·{' '}
+              <strong style={{ color: 'var(--draw)' }}>{nf(overall?.ties, dic)}</strong>{' '}
+              {resultLetter('E', dic)} ·{' '}
+              <strong style={{ color: 'var(--loss)' }}>{nf(overall?.losses, dic)}</strong>{' '}
+              {resultLetter('D', dic)}
             </span>
             <span>
               {dic.common.winRate}{' '}

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import RadarDNA from '@/components/RadarDNA';
 import GraficoNotas from '@/components/GraficoNotas';
 import { useDic } from '@/components/I18nProvider';
-import { posLabel, initials, dec, nf, pct } from '@/lib/format';
+import { posLabel, initials, dec, nf, pct, resultLetter } from '@/lib/format';
 
 function notaClasse(v) {
   if (v >= 7.8) return 'a';
@@ -196,7 +196,7 @@ export default function DnaAtleta({ perfil, platform, clubId, clubName }) {
                     <td>
                       <span className="player-cell">
                         <span className={`pill ${p.resultado}`} style={{ width: 26, height: 26 }}>
-                          {p.resultado}
+                          {resultLetter(p.resultado, dic)}
                         </span>
                         <span style={{ fontWeight: 620 }}>{p.adversario}</span>
                         <span style={{ color: 'var(--dim)' }}>

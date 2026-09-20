@@ -1,4 +1,4 @@
-import { nf, dec, pct } from '@/lib/format';
+import { nf, dec, pct, resultLetter } from '@/lib/format';
 
 /**
  * These render on the server for the club page and on the client for the home
@@ -12,7 +12,7 @@ export function FormStrip({ form, dic }) {
     <div className="form-strip">
       {form.map((r, i) => (
         <span key={i} className={`pill ${r}`}>
-          {r}
+          {resultLetter(r, dic)}
         </span>
       ))}
     </div>
@@ -34,7 +34,8 @@ export default function StatCards({ overall, summary, dic }) {
         <div className="k">{t.winRate}</div>
         <div className="v">{pct(summary?.aproveitamento)}</div>
         <div className="sub">
-          {nf(o.wins, dic)}V · {nf(o.ties, dic)}E · {nf(o.losses, dic)}D
+          {nf(o.wins, dic)}{resultLetter('V', dic)} · {nf(o.ties, dic)}{resultLetter('E', dic)} ·{' '}
+          {nf(o.losses, dic)}{resultLetter('D', dic)}
         </div>
         <div className="bar">
           <i className="w" style={{ width: `${wPct}%` }} />
